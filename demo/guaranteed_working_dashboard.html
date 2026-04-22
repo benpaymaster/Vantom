@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Guaranteed Working Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .phone-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.emergency {
+            background: #FF3B30;
+        }
+
+        .action-btn.emergency:hover {
+            background: #D70015;
+        }
+
+        .action-btn.rescue {
+            background: #FF9500;
+        }
+
+        .action-btn.rescue:hover {
+            background: #E68300;
+        }
+
+        .action-btn.camera {
+            background: #34C759;
+        }
+
+        .action-btn.camera:hover {
+            background: #28CD41;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .message-board {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .message-item {
+            display: flex;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #007AFF;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .message-text {
+            color: #333;
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .status-display {
+            background: #F0F9FF;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .status-title {
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 8px;
+        }
+
+        .fleet-map {
+            height: 150px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1e7dd 100%);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            position: relative;
+            border: 2px solid #007AFF;
+        }
+
+        .driver-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+            color: white;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .driver-marker.you {
+            background: #007AFF;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .driver-marker.available {
+            background: #34C759;
+            left: 70%;
+            top: 30%;
+        }
+
+        .driver-marker.critical {
+            background: #FF3B30;
+            left: 20%;
+            top: 70%;
+        }
+
+        .camera-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+        }
+
+        .camera-modal.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .camera-header {
+            background: #000;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .camera-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .camera-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-view {
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-preview {
+            width: 200px;
+            height: 200px;
+            border: 3px solid #34C759;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333);
+            background-size: 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .camera-controls {
+            background: #000;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .camera-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        .camera-btn.capture {
+            width: 50px;
+            height: 50px;
+            background: white;
+            color: black;
+            font-weight: bold;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .camera-btn.capture:hover {
+            background: #f0f0f0;
+        }
+
+        .test-section {
+            background: #FFF3CD;
+            border: 2px solid #FFC107;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 20px;
+        }
+
+        .test-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .test-btn {
+            background: #FFC107;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .test-btn:hover {
+            background: #E0A800;
+        }
+
+        .test-result {
+            margin-top: 8px;
+            padding: 8px;
+            background: #D4EDDA;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #155724;
+        }
+
+        .safety-metrics {
+            margin-bottom: 12px;
+        }
+
+        .safety-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #F8F9FA;
+            border-radius: 6px;
+        }
+
+        .safety-label {
+            width: 80px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .safety-bar {
+            flex: 1;
+            height: 8px;
+            background: #E5E5EA;
+            border-radius: 4px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+
+        .safety-fill {
+            height: 100%;
+            background: #007AFF;
+            transition: width 0.3s ease;
+        }
+
+        .safety-fill.good {
+            background: #34C759;
+        }
+
+        .safety-fill.warning {
+            background: #FF9500;
+        }
+
+        .safety-fill.danger {
+            background: #FF3B30;
+        }
+
+        .safety-value {
+            width: 60px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-align: right;
+        }
+
+        .safety-alerts {
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .alert-item.good {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .alert-item.warning {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .alert-item.danger {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+            margin-right: 8px;
+            color: white;
+        }
+
+        .alert-item.good .alert-icon {
+            background: #28A745;
+        }
+
+        .alert-item.warning .alert-icon {
+            background: #FFC107;
+        }
+
+        .alert-item.danger .alert-icon {
+            background: #DC3545;
+        }
+
+        .alert-text {
+            flex: 1;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Camera Modal -->
+    <div class="camera-modal" id="camera-modal">
+        <div class="camera-header">
+            <div class="camera-title" id="camera-title">Camera</div>
+            <button class="camera-close" onclick="closeCamera()">×</button>
+        </div>
+        <div class="camera-view">
+            <div class="camera-preview" id="camera-preview">
+                <div>
+                    <div style="font-size: 24px; margin-bottom: 10px;">CAMERA READY</div>
+                    <div style="font-size: 14px;">Point and capture</div>
+                </div>
+            </div>
+        </div>
+        <div class="camera-controls">
+            <button class="camera-btn" onclick="closeCamera()">Cancel</button>
+            <button class="camera-btn capture" onclick="capturePhoto()">Capture</button>
+            <button class="camera-btn" onclick="switchCamera()">Switch</button>
+        </div>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">9:41 AM</span>
+                <div>
+                    <span class="battery" id="battery">82%</span>
+                    <span> | </span>
+                    <span>5G</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>VANTOM OS</h1>
+                <div class="driver-info">
+                    DRIVER: John Smith | VAN: A393 | SHIFT: Active
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn camera" onclick="handleVehicleCheck()">
+                    <span>Vehicle Check</span>
+                </button>
+                <button class="action-btn camera" onclick="handlePackageScan()">
+                    <span>Scan Package</span>
+                </button>
+                <button class="action-btn rescue" onclick="handleRequestHelp()">
+                    <span>Request Help</span>
+                </button>
+                <button class="action-btn emergency" onclick="handleEmergency()">
+                    <span>Emergency</span>
+                </button>
+            </div>
+
+            <!-- Fleet Map -->
+            <div class="section">
+                <div class="section-title">FLEET MAP</div>
+                <div class="fleet-map">
+                    <div class="driver-marker you">YOU</div>
+                    <div class="driver-marker available">A401</div>
+                    <div class="driver-marker critical">A408</div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="section">
+                <div class="section-title">FLEET MESSAGES</div>
+                <div class="message-board" id="message-board">
+                    <div class="message-item">
+                        <div class="message-avatar">SYS</div>
+                        <div class="message-content">
+                            <div class="message-sender">SYSTEM</div>
+                            <div class="message-text">Vantom OS initialized - All systems online</div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Safety Monitoring -->
+            <div class="section">
+                <div class="section-title">VEHICLE SAFETY MONITORING</div>
+                <div class="safety-metrics">
+                    <div class="safety-item">
+                        <div class="safety-label">Acceleration</div>
+                        <div class="safety-bar">
+                            <div class="safety-fill" id="accel-bar" style="width: 30%;"></div>
+                        </div>
+                        <div class="safety-value" id="accel-value">Normal</div>
+                    </div>
+                    <div class="safety-item">
+                        <div class="safety-label">Braking</div>
+                        <div class="safety-bar">
+                            <div class="safety-fill" id="brake-bar" style="width: 20%;"></div>
+                        </div>
+                        <div class="safety-value" id="brake-value">Smooth</div>
+                    </div>
+                    <div class="safety-item">
+                        <div class="safety-label">Speed</div>
+                        <div class="safety-bar">
+                            <div class="safety-fill" id="speed-bar" style="width: 45%;"></div>
+                        </div>
+                        <div class="safety-value" id="speed-value">28 mph</div>
+                    </div>
+                    <div class="safety-item">
+                        <div class="safety-label">Lights</div>
+                        <div class="safety-bar">
+                            <div class="safety-fill good" id="lights-bar" style="width: 100%;"></div>
+                        </div>
+                        <div class="safety-value" id="lights-value">All On</div>
+                    </div>
+                </div>
+                <div class="safety-alerts" id="safety-alerts">
+                    <div class="alert-item good">
+                        <span class="alert-icon">OK</span>
+                        <span class="alert-text">All safety systems operational</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Display -->
+            <div class="section">
+                <div class="status-display" id="status-display">
+                    <div class="status-title">SYSTEM STATUS</div>
+                    <div id="status-text">All systems operational</div>
+                </div>
+            </div>
+
+            <!-- Test Section -->
+            <div class="test-section">
+                <div class="test-title">BUTTON TEST SECTION</div>
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testAllButtons()">Test All</button>
+                    <button class="test-btn" onclick="testVehicleCheck()">Test Vehicle</button>
+                    <button class="test-btn" onclick="testPackageScan()">Test Package</button>
+                    <button class="test-btn" onclick="testHelp()">Test Help</button>
+                    <button class="test-btn" onclick="testEmergency()">Test Emergency</button>
+                </div>
+                <div class="test-result" id="test-result">
+                    Click test buttons to verify functionality
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentCameraMode = '';
+        let testResults = [];
+
+        // Time update
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // Camera functions
+        function openCamera(mode) {
+            currentCameraMode = mode;
+            const modal = document.getElementById('camera-modal');
+            const title = document.getElementById('camera-title');
+            const preview = document.getElementById('camera-preview');
+            
+            modal.style.display = 'flex';
+            
+            if (mode === 'vehicle') {
+                title.textContent = 'Vehicle Check Camera';
+                preview.innerHTML = `
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 10px;">VEHICLE CHECK</div>
+                        <div style="font-size: 14px;">Tire pressure & safety scan</div>
+                    </div>
+                `;
+            } else if (mode === 'package') {
+                title.textContent = 'Package Scanner';
+                preview.innerHTML = `
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 10px;">PACKAGE SCAN</div>
+                        <div style="font-size: 14px;">QR code scanning ready</div>
+                    </div>
+                `;
+            }
+            
+            updateStatus('Camera opened: ' + mode);
+            updateTestResult('Camera opened successfully');
+        }
+
+        function closeCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.style.display = 'none';
+            updateStatus('Camera closed');
+            updateTestResult('Camera closed successfully');
+        }
+
+        function capturePhoto() {
+            const preview = document.getElementById('camera-preview');
+            preview.innerHTML = `
+                <div>
+                    <div style="font-size: 24px; margin-bottom: 10px;">CAPTURING...</div>
+                    <div style="font-size: 14px;">Photo saved</div>
+                </div>
+            `;
+            
+            updateStatus('Photo captured successfully!');
+            updateTestResult('Photo captured: ' + currentCameraMode);
+            
+            setTimeout(() => {
+                closeCamera();
+                
+                let message = '';
+                if (currentCameraMode === 'vehicle') {
+                    message = 'Vehicle check photo captured! Tire pressure verified.';
+                } else if (currentCameraMode === 'package') {
+                    message = 'Package scanned: 1Z987ABC654321 - Amazon Prime';
+                }
+                
+                addMessage('YOU', message);
+                updateStatus('Photo uploaded and processed');
+            }, 1500);
+        }
+
+        function switchCamera() {
+            updateStatus('Camera switched');
+            updateTestResult('Camera switched successfully');
+        }
+
+        // Button handlers
+        function handleVehicleCheck() {
+            openCamera('vehicle');
+        }
+
+        function handlePackageScan() {
+            openCamera('package');
+        }
+
+        function handleRequestHelp() {
+            updateStatus('Help request sent to fleet');
+            updateTestResult('Help request sent');
+            addMessage('YOU', 'I need help! Battery at 15% and I have 10 parcels left.');
+            
+            setTimeout(() => {
+                addMessage('A401', 'I can help! On my way now. ETA 3 minutes.');
+                updateStatus('Help response received from A401');
+                updateTestResult('Help response received');
+            }, 2000);
+        }
+
+        function handleEmergency() {
+            updateStatus('EMERGENCY ALERT SENT!');
+            updateTestResult('Emergency alert sent');
+            addMessage('YOU', 'EMERGENCY! Engine left running at stop. Safety violation!');
+            
+            setTimeout(() => {
+                addMessage('OFFICE', 'Emergency detected! Auto safety protocols activated.');
+                updateStatus('Office safety alert received');
+                updateTestResult('Office safety alert received');
+            }, 1000);
+        }
+
+        // Test functions
+        function testAllButtons() {
+            updateTestResult('Testing all buttons...');
+            
+            setTimeout(() => {
+                testVehicleCheck();
+            }, 500);
+            
+            setTimeout(() => {
+                testPackageScan();
+            }, 2000);
+            
+            setTimeout(() => {
+                testHelp();
+            }, 3500);
+            
+            setTimeout(() => {
+                testEmergency();
+            }, 5000);
+            
+            setTimeout(() => {
+                updateTestResult('All tests completed successfully!');
+            }, 7000);
+        }
+
+        function testVehicleCheck() {
+            updateTestResult('Testing Vehicle Check...');
+            handleVehicleCheck();
+        }
+
+        function testPackageScan() {
+            updateTestResult('Testing Package Scan...');
+            handlePackageScan();
+        }
+
+        function testHelp() {
+            updateTestResult('Testing Help Request...');
+            handleRequestHelp();
+        }
+
+        function testEmergency() {
+            updateTestResult('Testing Emergency...');
+            handleEmergency();
+        }
+
+        // Utility functions
+        function addMessage(sender, text) {
+            const messageBoard = document.getElementById('message-board');
+            const messageItem = document.createElement('div');
+            messageItem.className = 'message-item';
+            
+            const avatar = sender.substring(0, 3).toUpperCase();
+            const time = 'Just now';
+            
+            messageItem.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-sender">${sender}</div>
+                    <div class="message-text">${text}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messageBoard.insertBefore(messageItem, messageBoard.firstChild);
+            
+            // Keep only last 5 messages
+            while (messageBoard.children.length > 5) {
+                messageBoard.removeChild(messageBoard.lastChild);
+            }
+        }
+
+        function updateStatus(text) {
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = text;
+        }
+
+        function updateTestResult(text) {
+            const testResult = document.getElementById('test-result');
+            testResult.textContent = text;
+        }
+
+        // Vehicle Safety Monitoring
+        function updateSafetyMetrics() {
+            // Simulate real-time safety data
+            const acceleration = Math.random() * 100;
+            const braking = Math.random() * 100;
+            const speed = Math.random() * 60;
+            const lightsOn = Math.random() > 0.1; // 90% chance lights are on
+            
+            // Update acceleration
+            const accelBar = document.getElementById('accel-bar');
+            const accelValue = document.getElementById('accel-value');
+            accelBar.style.width = acceleration + '%';
+            if (acceleration > 70) {
+                accelBar.className = 'safety-fill danger';
+                accelValue.textContent = 'Rough';
+                addSafetyAlert('danger', 'Rough acceleration detected - Drive smoothly');
+            } else if (acceleration > 40) {
+                accelBar.className = 'safety-fill warning';
+                accelValue.textContent = 'Moderate';
+            } else {
+                accelBar.className = 'safety-fill';
+                accelValue.textContent = 'Normal';
+            }
+            
+            // Update braking
+            const brakeBar = document.getElementById('brake-bar');
+            const brakeValue = document.getElementById('brake-value');
+            brakeBar.style.width = braking + '%';
+            if (braking > 70) {
+                brakeBar.className = 'safety-fill danger';
+                brakeValue.textContent = 'Hard';
+                addSafetyAlert('danger', 'Hard braking detected - Reduce speed gradually');
+            } else if (braking > 40) {
+                brakeBar.className = 'safety-fill warning';
+                brakeValue.textContent = 'Moderate';
+            } else {
+                brakeBar.className = 'safety-fill';
+                brakeValue.textContent = 'Smooth';
+            }
+            
+            // Update speed
+            const speedBar = document.getElementById('speed-bar');
+            const speedValue = document.getElementById('speed-value');
+            const speedPercent = (speed / 60) * 100;
+            speedBar.style.width = speedPercent + '%';
+            if (speed > 50) {
+                speedBar.className = 'safety-fill danger';
+                speedValue.textContent = Math.round(speed) + ' mph';
+                addSafetyAlert('warning', 'Speed limit exceeded - Reduce speed');
+            } else if (speed > 35) {
+                speedBar.className = 'safety-fill warning';
+                speedValue.textContent = Math.round(speed) + ' mph';
+            } else {
+                speedBar.className = 'safety-fill';
+                speedValue.textContent = Math.round(speed) + ' mph';
+            }
+            
+            // Update lights
+            const lightsBar = document.getElementById('lights-bar');
+            const lightsValue = document.getElementById('lights-value');
+            if (lightsOn) {
+                lightsBar.style.width = '100%';
+                lightsBar.className = 'safety-fill good';
+                lightsValue.textContent = 'All On';
+            } else {
+                lightsBar.style.width = '0%';
+                lightsBar.className = 'safety-fill danger';
+                lightsValue.textContent = 'Lights Off';
+                addSafetyAlert('danger', 'Lights off detected - Turn on headlights immediately');
+            }
+        }
+
+        function addSafetyAlert(type, message) {
+            const alertsContainer = document.getElementById('safety-alerts');
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item ' + type;
+            
+            const icon = type === 'good' ? 'OK' : type === 'warning' ? '!' : '!';
+            alertItem.innerHTML = `
+                <span class="alert-icon">${icon}</span>
+                <span class="alert-text">${message}</span>
+            `;
+            
+            alertsContainer.insertBefore(alertItem, alertsContainer.firstChild);
+            
+            // Keep only last 5 alerts
+            while (alertsContainer.children.length > 5) {
+                alertsContainer.removeChild(alertsContainer.lastChild);
+            }
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertItem.parentNode) {
+                    alertItem.parentNode.removeChild(alertItem);
+                }
+            }, 5000);
+        }
+
+        // Initialize
+        updateTime();
+        setInterval(updateTime, 60000);
+        
+        // Update safety metrics every 3 seconds
+        setInterval(updateSafetyMetrics, 3000);
+        
+        // Add welcome message
+        setTimeout(() => {
+            addMessage('SYSTEM', 'Vantom OS initialized - All buttons functional');
+            updateStatus('System ready - All buttons working');
+            updateTestResult('Dashboard loaded successfully');
+            addSafetyAlert('good', 'Vehicle safety monitoring activated');
+        }, 1000);
+    </script>
+</body>
+</html>

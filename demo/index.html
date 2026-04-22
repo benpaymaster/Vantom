@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Driver Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007AFF;
+            margin-bottom: 20px;
+        }
+        
+        .demo-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .demo-btn {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+        }
+        
+        .demo-btn.emergency {
+            background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
+        }
+        
+        .demo-btn.success {
+            background: linear-gradient(135deg, #34C759 0%, #28CD41 100%);
+        }
+        
+        .features {
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007AFF;
+        }
+        
+        .feature h3 {
+            color: #007AFF;
+            margin-bottom: 5px;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">VANTOM OS</div>
+        <h2>Driver Coordination System</h2>
+        <p>Complete solution for Amazon delivery drivers</p>
+        
+        <div class="demo-links">
+            <a href="Vantom_OS_Demo.html" class="demo-btn">Main Demo</a>
+            <a href="../frontend/Main_Dashboard_Mockup.html" class="demo-btn success">Mobile Dashboard</a>
+            <a href="#" onclick="showFeatures()" class="demo-btn emergency">Features</a>
+            <a href="#" onclick="runTerminalDemo()" class="demo-btn">Terminal Demo</a>
+        </div>
+        
+        <div class="features" id="features" style="display: none;">
+            <div class="feature">
+                <h3>Vehicle Checks</h3>
+                <p>Digital inspection with photos and guided checklist</p>
+            </div>
+            <div class="feature">
+                <h3>Fuel Recording</h3>
+                <p>Automatic fuel level photos with timestamp tracking</p>
+            </div>
+            <div class="feature">
+                <h3>Package Scanning</h3>
+                <p>QR code and barcode scanning with automatic counting</p>
+            </div>
+            <div class="feature">
+                <h3>GPS Navigation</h3>
+                <p>Turn-by-turn directions with traffic optimization</p>
+            </div>
+            <div class="feature">
+                <h3>Driver Messaging</h3>
+                <p>P2P communication without WhatsApp chaos</p>
+            </div>
+            <div class="feature">
+                <h3>Emergency Rescue</h3>
+                <p>One-tap help requests with automatic coordination</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <p><strong>Web Server Running:</strong> http://localhost:8081</p>
+            <p><strong>Terminal Demo:</strong> <code>./run_demo.sh</code></p>
+        </div>
+    </div>
+    
+    <script>
+        function showFeatures() {
+            const features = document.getElementById('features');
+            features.style.display = features.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function runTerminalDemo() {
+            alert('Run this command in terminal:\n./run_demo.sh\n\nThis shows the complete technical demo with all 3 tracks!');
+        }
+    </script>
+</body>
+</html>

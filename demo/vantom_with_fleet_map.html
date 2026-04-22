@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Fleet Map Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .phone-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.emergency {
+            background: #FF3B30;
+        }
+
+        .action-btn.emergency:hover {
+            background: #D70015;
+        }
+
+        .action-btn.rescue {
+            background: #FF9500;
+        }
+
+        .action-btn.rescue:hover {
+            background: #E68300;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        /* Fleet Map Styles */
+        .fleet-map {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1e7dd 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #007AFF;
+        }
+
+        .map-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,123,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,123,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .driver-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .driver-marker:hover {
+            transform: scale(1.2);
+            z-index: 20;
+        }
+
+        .driver-marker.you {
+            background: #007AFF;
+            animation: pulse 2s infinite;
+        }
+
+        .driver-marker.available {
+            background: #34C759;
+        }
+
+        .driver-marker.overloaded {
+            background: #FF9500;
+        }
+
+        .driver-marker.critical {
+            background: #FF3B30;
+        }
+
+        .driver-marker.helping {
+            background: #AF52DE;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .driver-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 30;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .driver-tooltip.show {
+            opacity: 1;
+        }
+
+        .distance-line {
+            position: absolute;
+            background: #007AFF;
+            height: 2px;
+            transform-origin: left center;
+            z-index: 5;
+            opacity: 0.6;
+        }
+
+        .distance-label {
+            position: absolute;
+            background: #007AFF;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 15;
+        }
+
+        .fleet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .fleet-item:last-child {
+            border-bottom: none;
+        }
+
+        .van-id {
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .van-status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-available {
+            background: #007AFF;
+            color: white;
+        }
+
+        .status-overloaded {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-critical {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .battery-indicator {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .safety-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #F0F9FF;
+            border-radius: 8px;
+            border-left: 4px solid #34C759;
+        }
+
+        .safety-text {
+            font-weight: 600;
+            color: #34C759;
+        }
+
+        .message-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .message-item:last-child {
+            border-bottom: none;
+        }
+
+        .message-type {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .msg-safety {
+            background: #34C759;
+            color: white;
+        }
+
+        .msg-rescue {
+            background: #FF9500;
+            color: white;
+        }
+
+        .msg-route {
+            background: #007AFF;
+            color: white;
+        }
+
+        .route-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .stop-number {
+            font-weight: 700;
+            color: #007AFF;
+        }
+
+        .stop-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-progress {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-next {
+            background: #007AFF;
+            color: white;
+        }
+
+        .demo-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .demo-btn-small {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .map-legend {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            padding: 8px;
+            background: #F8F9FA;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        @media (max-width: 480px) {
+            .phone-container {
+                margin: 10px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>FLEET MAP DEMO</div>
+        <button class="demo-btn-small" onclick="simulateEmergency()">Emergency</button>
+        <button class="demo-btn-small" onclick="simulateRescue()">Rescue</button>
+        <button class="demo-btn-small" onclick="updateDriverPositions()">Move Drivers</button>
+        <button class="demo-btn-small" onclick="showSweepRequest()">Sweep</button>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">9:41 AM</span>
+                <div>
+                    <span class="battery" id="battery">82%</span>
+                    <span> | </span>
+                    <span>5G</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>VANTOM OS</h1>
+                <div class="driver-info">
+                    DRIVER: John Smith | VAN: A393 | SHIFT: Active
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn" onclick="startRoute()">Start Route</button>
+                <button class="action-btn emergency" onclick="emergencyAlert()">Emergency</button>
+                <button class="action-btn rescue" onclick="requestRescue()">Request Rescue</button>
+                <button class="action-btn" onclick="showMessages()">Messages</button>
+            </div>
+
+            <!-- Fleet Map Section -->
+            <div class="section">
+                <div class="section-title">FLEET MAP - NEARBY DRIVERS</div>
+                <div class="fleet-map" id="fleet-map">
+                    <div class="map-grid"></div>
+                    
+                    <!-- Driver Markers -->
+                    <div class="driver-marker you" id="driver-you" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                        YOU
+                    </div>
+                    
+                    <div class="driver-marker available" id="driver-a401" style="left: 70%; top: 30%;">
+                        A401
+                    </div>
+                    
+                    <div class="driver-marker available" id="driver-a405" style="left: 30%; top: 70%;">
+                        A405
+                    </div>
+                    
+                    <div class="driver-marker overloaded" id="driver-a408" style="left: 80%; top: 60%;">
+                        A408
+                    </div>
+                    
+                    <div class="driver-marker critical" id="driver-a410" style="left: 20%; top: 40%;">
+                        A410
+                    </div>
+                    
+                    <!-- Distance Lines -->
+                    <div class="distance-line" id="line-a401"></div>
+                    <div class="distance-label" id="label-a401">0.3 mi</div>
+                    
+                    <div class="driver-tooltip" id="tooltip"></div>
+                </div>
+                
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #007AFF;"></div>
+                        <span>You</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #34C759;"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #FF9500;"></div>
+                        <span>Overloaded</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #FF3B30;"></div>
+                        <span>Critical</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fleet Status -->
+            <div class="section">
+                <div class="section-title">FLEET STATUS (Live)</div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A393 (YOU)</div>
+                        <div class="battery-indicator" id="your-battery">82% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-active" id="your-status">ACTIVE</span>
+                        <span id="your-parcels">42/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A401</div>
+                        <div class="battery-indicator">94% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-available">AVAILABLE</span>
+                        <span>8/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A405</div>
+                        <div class="battery-indicator">45% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-overloaded">OVERLOADED</span>
+                        <span>52/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A408</div>
+                        <div class="battery-indicator">12% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-critical">CRITICAL</span>
+                        <span>35/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A410</div>
+                        <div class="battery-indicator">23% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-critical">CRITICAL</span>
+                        <span>48/50 parcels</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Status -->
+            <div class="section">
+                <div class="section-title">SAFETY STATUS</div>
+                <div class="safety-status">
+                    <div>
+                        <div class="safety-text" id="engine-status">Engine Status: OFF (Compliant)</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">Last Check: 2 min ago</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24px; font-weight: 700; color: #34C759;">98/100</div>
+                        <div style="font-size: 12px; color: #666;">Safety Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="section">
+                <div class="section-title">MESSAGES (4 New)</div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-route" style="background: #FF3B30;">URGENT</span>
+                        <span style="margin-left: 8px;">Badge scanning process changed - No scan required at debrief</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">Just now</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-safety">SAFETY</span>
+                        <span style="margin-left: 8px;">Engine compliance verified</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">2m ago</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-rescue">RESCUE</span>
+                        <span style="margin-left: 8px;">VAN A408 needs help - Battery critical</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">5m ago</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-route">ROUTE</span>
+                        <span style="margin-left: 8px;">Updated delivery sequence - 2 stops added</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">12m ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Driver data
+        const drivers = {
+            'you': { id: 'you', name: 'YOU', van: 'A393', battery: 82, parcels: 42, status: 'active', lat: 40.7128, lng: -74.0060 },
+            'a401': { id: 'a401', name: 'A401', van: 'A401', battery: 94, parcels: 8, status: 'available', lat: 40.7150, lng: -74.0030 },
+            'a405': { id: 'a405', name: 'A405', van: 'A405', battery: 45, parcels: 52, status: 'overloaded', lat: 40.7100, lng: -74.0090 },
+            'a408': { id: 'a408', name: 'A408', van: 'A408', battery: 12, parcels: 35, status: 'critical', lat: 40.7180, lng: -74.0010 },
+            'a410': { id: 'a410', name: 'A410', van: 'A410', battery: 23, parcels: 48, status: 'critical', lat: 40.7080, lng: -74.0100 }
+        };
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 3959; // Earth's radius in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function updateMap() {
+            const map = document.getElementById('fleet-map');
+            const you = drivers.you;
+            
+            // Update distance lines and labels
+            Object.keys(drivers).forEach(driverId => {
+                if (driverId !== 'you') {
+                    const driver = drivers[driverId];
+                    const distance = calculateDistance(you.lat, you.lng, driver.lat, driver.lng);
+                    
+                    // Update distance label
+                    const label = document.getElementById(`label-${driverId}`);
+                    if (label) {
+                        label.textContent = `${distance.toFixed(1)} mi`;
+                    }
+                }
+            });
+        }
+
+        function setupMapInteractions() {
+            const tooltip = document.getElementById('tooltip');
+            
+            Object.keys(drivers).forEach(driverId => {
+                const marker = document.getElementById(`driver-${driverId}`);
+                const driver = drivers[driverId];
+                
+                if (marker) {
+                    marker.addEventListener('mouseenter', (e) => {
+                        const distance = driverId === 'you' ? 0 : 
+                            calculateDistance(drivers.you.lat, drivers.you.lng, driver.lat, driver.lng);
+                        
+                        tooltip.innerHTML = `
+                            <strong>VAN ${driver.van}</strong><br>
+                            Status: ${driver.status.toUpperCase()}<br>
+                            Battery: ${driver.battery}%<br>
+                            Parcels: ${driver.parcels}/50<br>
+                            ${driverId !== 'you' ? `Distance: ${distance.toFixed(1)} mi` : 'Your Location'}
+                        `;
+                        
+                        tooltip.classList.add('show');
+                        
+                        const rect = marker.getBoundingClientRect();
+                        const mapRect = document.getElementById('fleet-map').getBoundingClientRect();
+                        tooltip.style.left = (rect.left - mapRect.left + rect.width/2) + 'px';
+                        tooltip.style.top = (rect.top - mapRect.top - 60) + 'px';
+                    });
+                    
+                    marker.addEventListener('mouseleave', () => {
+                        tooltip.classList.remove('show');
+                    });
+                    
+                    marker.addEventListener('click', () => {
+                        if (driverId !== 'you') {
+                            const distance = calculateDistance(drivers.you.lat, drivers.you.lng, driver.lat, driver.lng);
+                            alert(`VAN ${driver.van} Details:\n\nStatus: ${driver.status.toUpperCase()}\nBattery: ${driver.battery}%\nParcels: ${driver.parcels}/50\nDistance: ${distance.toFixed(1)} miles\n\n${driver.status === 'available' ? 'Available for sweep coordination!' : 'Currently busy'}`);
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateDriverPositions() {
+            // Simulate drivers moving
+            Object.keys(drivers).forEach(driverId => {
+                if (driverId !== 'you') {
+                    const driver = drivers[driverId];
+                    const marker = document.getElementById(`driver-${driverId}`);
+                    
+                    // Random movement
+                    const currentLeft = parseFloat(marker.style.left);
+                    const currentTop = parseFloat(marker.style.top);
+                    
+                    const newLeft = Math.max(10, Math.min(90, currentLeft + (Math.random() - 0.5) * 10));
+                    const newTop = Math.max(10, Math.min(90, currentTop + (Math.random() - 0.5) * 10));
+                    
+                    marker.style.left = newLeft + '%';
+                    marker.style.top = newTop + '%';
+                    
+                    // Update coordinates
+                    driver.lat += (Math.random() - 0.5) * 0.002;
+                    driver.lng += (Math.random() - 0.5) * 0.002;
+                }
+            });
+            
+            updateMap();
+        }
+
+        function simulateEmergency() {
+            const engineStatus = document.getElementById('engine-status');
+            engineStatus.textContent = 'Engine Status: ON (VIOLATION)';
+            engineStatus.style.color = '#FF3B30';
+            
+            setTimeout(() => {
+                engineStatus.textContent = 'Engine Status: OFF (Compliant)';
+                engineStatus.style.color = '#34C759';
+                alert('Engine automatically shut off for safety compliance.\n\nAll drivers notified via fleet map!');
+            }, 3000);
+        }
+
+        function simulateRescue() {
+            const yourStatus = document.getElementById('your-status');
+            const yourParcels = document.getElementById('your-parcels');
+            
+            yourStatus.textContent = 'RESCUE_NEEDED';
+            yourStatus.className = 'status-badge status-critical';
+            yourParcels.textContent = '55/50 parcels (OVERLOADED)';
+            
+            // Update map marker
+            const youMarker = document.getElementById('driver-you');
+            youMarker.className = 'driver-marker critical';
+            youMarker.textContent = 'HELP';
+            
+            setTimeout(() => {
+                yourStatus.textContent = 'ACTIVE';
+                yourStatus.className = 'status-badge status-active';
+                yourParcels.textContent = '40/50 parcels';
+                youMarker.className = 'driver-marker you';
+                youMarker.textContent = 'YOU';
+                
+                alert('Rescue completed! VAN A401 took 15 parcels.\n\nFleet map updated with new status!');
+            }, 5000);
+        }
+
+        function showSweepRequest() {
+            const a408 = drivers.a408;
+            const marker = document.getElementById('driver-a408');
+            
+            marker.className = 'driver-marker helping';
+            marker.textContent = 'SWEEP';
+            
+            alert('SWEEP REQUEST:\n\nVAN A408 needs help\nBattery: 12% (Critical)\nDistance: 0.8 miles\n\nTap VAN A408 on map to coordinate!');
+            
+            setTimeout(() => {
+                marker.className = 'driver-marker critical';
+                marker.textContent = 'A408';
+            }, 8000);
+        }
+
+        function startRoute() {
+            alert('Route started! GPS navigation activated.\n\nFleet map shows nearby drivers for coordination.');
+        }
+
+        function emergencyAlert() {
+            simulateEmergency();
+        }
+
+        function requestRescue() {
+            simulateRescue();
+        }
+
+        function showMessages() {
+            alert('Messages Center:\n\n4 new messages:\n- URGENT: Badge scanning process changed\n- SAFETY: Engine compliance verified\n- RESCUE: VAN A408 needs help\n- ROUTE: Updated delivery sequence\n\nAll drivers can see your location on fleet map!');
+        }
+
+        // Initialize
+        updateMap();
+        setupMapInteractions();
+        
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        updateTime();
+        
+        // Update driver positions every 5 seconds
+        setInterval(updateDriverPositions, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Working Driver Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .phone-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.emergency {
+            background: #FF3B30;
+        }
+
+        .action-btn.emergency:hover {
+            background: #D70015;
+        }
+
+        .action-btn.rescue {
+            background: #FF9500;
+        }
+
+        .action-btn.rescue:hover {
+            background: #E68300;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .fleet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .fleet-item:last-child {
+            border-bottom: none;
+        }
+
+        .van-id {
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .van-status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-available {
+            background: #007AFF;
+            color: white;
+        }
+
+        .status-overloaded {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-critical {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .battery-indicator {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .safety-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #F0F9FF;
+            border-radius: 8px;
+            border-left: 4px solid #34C759;
+        }
+
+        .safety-text {
+            font-weight: 600;
+            color: #34C759;
+        }
+
+        .message-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .message-item:last-child {
+            border-bottom: none;
+        }
+
+        .message-type {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .msg-safety {
+            background: #34C759;
+            color: white;
+        }
+
+        .msg-rescue {
+            background: #FF9500;
+            color: white;
+        }
+
+        .msg-route {
+            background: #007AFF;
+            color: white;
+        }
+
+        .route-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .stop-number {
+            font-weight: 700;
+            color: #007AFF;
+        }
+
+        .stop-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-progress {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-next {
+            background: #007AFF;
+            color: white;
+        }
+
+        .demo-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .demo-btn-small {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        @media (max-width: 480px) {
+            .phone-container {
+                margin: 10px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>VANTOM OS DEMO</div>
+        <button class="demo-btn-small" onclick="simulateEmergency()">Emergency</button>
+        <button class="demo-btn-small" onclick="simulateRescue()">Rescue</button>
+        <button class="demo-btn-small" onclick="updateBattery()">Battery</button>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">9:41 AM</span>
+                <div>
+                    <span class="battery" id="battery">82%</span>
+                    <span> | </span>
+                    <span>5G</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>VANTOM OS</h1>
+                <div class="driver-info">
+                    DRIVER: John Smith | VAN: A393 | SHIFT: Active
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn" onclick="startRoute()">Start Route</button>
+                <button class="action-btn emergency" onclick="emergencyAlert()">Emergency</button>
+                <button class="action-btn rescue" onclick="requestRescue()">Request Rescue</button>
+                <button class="action-btn" onclick="showMessages()">Messages</button>
+            </div>
+
+            <!-- Fleet Status -->
+            <div class="section">
+                <div class="section-title">FLEET STATUS (Live)</div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A393 (YOU)</div>
+                        <div class="battery-indicator" id="your-battery">82% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-active" id="your-status">ACTIVE</span>
+                        <span id="your-parcels">42/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A401</div>
+                        <div class="battery-indicator">94% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-available">AVAILABLE</span>
+                        <span>8/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A405</div>
+                        <div class="battery-indicator">45% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-overloaded">OVERLOADED</span>
+                        <span>52/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A408</div>
+                        <div class="battery-indicator">12% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-critical">CRITICAL</span>
+                        <span>35/50 parcels</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Status -->
+            <div class="section">
+                <div class="section-title">SAFETY STATUS</div>
+                <div class="safety-status">
+                    <div>
+                        <div class="safety-text" id="engine-status">Engine Status: OFF (Compliant)</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">Last Check: 2 min ago</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24px; font-weight: 700; color: #34C759;">98/100</div>
+                        <div style="font-size: 12px; color: #666;">Safety Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="section">
+                <div class="section-title">MESSAGES (4 New)</div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-route" style="background: #FF3B30;">URGENT</span>
+                        <span style="margin-left: 8px;">Badge scanning process changed - No scan required at debrief</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">Just now</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-safety">SAFETY</span>
+                        <span style="margin-left: 8px;">Engine compliance verified</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">2m ago</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-rescue">RESCUE</span>
+                        <span style="margin-left: 8px;">VAN A408 needs help - Battery critical</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">5m ago</span>
+                </div>
+                <div class="message-item">
+                    <div>
+                        <span class="message-type msg-route">ROUTE</span>
+                        <span style="margin-left: 8px;">Updated delivery sequence - 2 stops added</span>
+                    </div>
+                    <span style="font-size: 12px; color: #666;">12m ago</span>
+                </div>
+            </div>
+
+            <!-- Today's Route -->
+            <div class="section">
+                <div class="section-title">TODAY'S ROUTE</div>
+                <div class="route-item">
+                    <div>
+                        <span class="stop-number">Stop 1/28</span>
+                        <span style="margin-left: 8px;">123 Main St</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="stop-status status-completed">COMPLETED</span>
+                    </div>
+                </div>
+                <div class="route-item">
+                    <div>
+                        <span class="stop-number">Stop 2/28</span>
+                        <span style="margin-left: 8px;">456 Oak Ave</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="stop-status status-progress">IN PROGRESS</span>
+                    </div>
+                </div>
+                <div class="route-item">
+                    <div>
+                        <span class="stop-number">Stop 3/28</span>
+                        <span style="margin-left: 8px;">789 Pine Rd</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="stop-status status-next">NEXT</span>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 8px; background: #F2F2F7; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 12px; color: #666;">ETA Completion</div>
+                    <div style="font-weight: 600;">3:45 PM</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function updateBattery() {
+            const battery = document.getElementById('battery');
+            const yourBattery = document.getElementById('your-battery');
+            const currentLevel = parseInt(battery.textContent);
+            const newLevel = Math.max(12, currentLevel - 5);
+            battery.textContent = newLevel + '%';
+            yourBattery.textContent = newLevel + '% battery';
+            
+            if (newLevel < 20) {
+                battery.style.color = '#FF3B30';
+                alert('Battery Critical! Rescue requested automatically.');
+            }
+        }
+
+        function simulateEmergency() {
+            const engineStatus = document.getElementById('engine-status');
+            engineStatus.textContent = 'Engine Status: ON (VIOLATION)';
+            engineStatus.style.color = '#FF3B30';
+            
+            setTimeout(() => {
+                engineStatus.textContent = 'Engine Status: OFF (Compliant)';
+                engineStatus.style.color = '#34C759';
+                alert('Engine automatically shut off for safety compliance.');
+            }, 3000);
+        }
+
+        function simulateRescue() {
+            const yourStatus = document.getElementById('your-status');
+            const yourParcels = document.getElementById('your-parcels');
+            
+            yourStatus.textContent = 'RESCUE_NEEDED';
+            yourStatus.className = 'status-badge status-critical';
+            yourParcels.textContent = '55/50 parcels (OVERLOADED)';
+            
+            setTimeout(() => {
+                yourStatus.textContent = 'ACTIVE';
+                yourStatus.className = 'status-badge status-active';
+                yourParcels.textContent = '40/50 parcels';
+                alert('Rescue completed! 15 parcels transferred to VAN A401.');
+            }, 5000);
+        }
+
+        function startRoute() {
+            alert('Route started! GPS navigation activated.\n\nNext stop: 456 Oak Ave (0.3 miles, 5 minutes)');
+        }
+
+        function emergencyAlert() {
+            simulateEmergency();
+        }
+
+        function requestRescue() {
+            simulateRescue();
+        }
+
+        function showMessages() {
+            alert('Messages Center:\n\n4 new messages:\n- URGENT: Badge scanning process changed\n- SAFETY: Engine compliance verified\n- RESCUE: VAN A408 needs help\n- ROUTE: Updated delivery sequence');
+        }
+
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        updateTime();
+    </script>
+</body>
+</html>

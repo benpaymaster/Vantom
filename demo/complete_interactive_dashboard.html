@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Complete Interactive Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .phone-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+            max-height: 667px;
+            overflow-y: auto;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.emergency {
+            background: #FF3B30;
+        }
+
+        .action-btn.emergency:hover {
+            background: #D70015;
+        }
+
+        .action-btn.rescue {
+            background: #FF9500;
+        }
+
+        .action-btn.rescue:hover {
+            background: #E68300;
+        }
+
+        .action-btn.camera {
+            background: #34C759;
+        }
+
+        .action-btn.camera:hover {
+            background: #28CD41;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        /* Fleet Map Styles */
+        .fleet-map {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1e7dd 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #007AFF;
+        }
+
+        .map-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,123,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,123,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .driver-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .driver-marker:hover {
+            transform: scale(1.2);
+            z-index: 20;
+        }
+
+        .driver-marker.you {
+            background: #007AFF;
+            animation: pulse 2s infinite;
+        }
+
+        .driver-marker.available {
+            background: #34C759;
+        }
+
+        .driver-marker.overloaded {
+            background: #FF9500;
+        }
+
+        .driver-marker.critical {
+            background: #FF3B30;
+        }
+
+        .driver-marker.helping {
+            background: #AF52DE;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .driver-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 30;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .driver-tooltip.show {
+            opacity: 1;
+        }
+
+        .distance-label {
+            position: absolute;
+            background: #007AFF;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 15;
+        }
+
+        .map-legend {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            padding: 8px;
+            background: #F8F9FA;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* Camera Modal Styles */
+        .camera-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+        }
+
+        .camera-modal.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .camera-header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .camera-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .camera-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .camera-view {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333),
+                        linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-frame {
+            width: 200px;
+            height: 200px;
+            border: 3px solid #34C759;
+            border-radius: 12px;
+            position: relative;
+            animation: scan-pulse 2s infinite;
+        }
+
+        @keyframes scan-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: #34C759;
+            top: 0;
+            animation: scan-move 2s linear infinite;
+        }
+
+        @keyframes scan-move {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .camera-controls {
+            background: #000;
+            padding: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .camera-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .camera-btn.capture {
+            width: 60px;
+            height: 60px;
+            background: white;
+            color: black;
+        }
+
+        .camera-btn.capture:hover {
+            background: #f0f0f0;
+        }
+
+        /* Message Board Styles */
+        .message-board {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .message-item {
+            display: flex;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #007AFF;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .message-text {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-type {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .msg-sweep {
+            background: #FF9500;
+            color: white;
+        }
+
+        .msg-safety {
+            background: #34C759;
+            color: white;
+        }
+
+        .msg-rescue {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .msg-office {
+            background: #007AFF;
+            color: white;
+        }
+
+        .msg-chat {
+            background: #8E8E93;
+            color: white;
+        }
+
+        .message-input-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #E5E5EA;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .send-btn:hover {
+            background: #0051D5;
+        }
+
+        .fleet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .fleet-item:last-child {
+            border-bottom: none;
+        }
+
+        .van-id {
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .van-status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-available {
+            background: #007AFF;
+            color: white;
+        }
+
+        .status-overloaded {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-critical {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .battery-indicator {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .safety-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #F0F9FF;
+            border-radius: 8px;
+            border-left: 4px solid #34C759;
+        }
+
+        .safety-text {
+            font-weight: 600;
+            color: #34C759;
+        }
+
+        .demo-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+
+        .demo-btn-small {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        @media (max-width: 480px) {
+            .phone-container {
+                margin: 10px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>COMPLETE DASHBOARD</div>
+        <button class="demo-btn-small" onclick="openCamera('vehicle')">Vehicle Camera</button>
+        <button class="demo-btn-small" onclick="openCamera('package')">Package Scan</button>
+        <button class="demo-btn-small" onclick="sendMessage('sweep')">Send Sweep</button>
+        <button class="demo-btn-small" onclick="updateMap()">Update Map</button>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="camera-modal" id="camera-modal">
+        <div class="camera-header">
+            <div class="camera-title" id="camera-title">Camera</div>
+            <button class="camera-close" onclick="closeCamera()">×</button>
+        </div>
+        <div class="camera-view">
+            <div class="camera-preview">
+                <div class="scan-frame" id="scan-frame">
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+        </div>
+        <div class="camera-controls">
+            <button class="camera-btn" onclick="closeCamera()">Cancel</button>
+            <button class="camera-btn capture" onclick="capturePhoto()">Capture</button>
+            <button class="camera-btn" onclick="switchCamera()">Switch</button>
+        </div>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">9:41 AM</span>
+                <div>
+                    <span class="battery" id="battery">82%</span>
+                    <span> | </span>
+                    <span>5G</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>VANTOM OS</h1>
+                <div class="driver-info">
+                    DRIVER: John Smith | VAN: A393 | SHIFT: Active
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn camera" onclick="openCamera('vehicle')">
+                    <span>Vehicle Check</span>
+                </button>
+                <button class="action-btn camera" onclick="openCamera('package')">
+                    <span>Scan Package</span>
+                </button>
+                <button class="action-btn rescue" onclick="sendMessage('rescue')">
+                    <span>Request Help</span>
+                </button>
+                <button class="action-btn emergency" onclick="sendMessage('emergency')">
+                    <span>Emergency</span>
+                </button>
+            </div>
+
+            <!-- Fleet Map -->
+            <div class="section">
+                <div class="section-title">FLEET MAP - LIVE DRIVERS</div>
+                <div class="fleet-map" id="fleet-map">
+                    <div class="map-grid"></div>
+                    
+                    <!-- Driver Markers -->
+                    <div class="driver-marker you" id="driver-you" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                        YOU
+                    </div>
+                    
+                    <div class="driver-marker available" id="driver-a401" style="left: 70%; top: 30%;">
+                        A401
+                    </div>
+                    
+                    <div class="driver-marker overloaded" id="driver-a405" style="left: 30%; top: 70%;">
+                        A405
+                    </div>
+                    
+                    <div class="driver-marker critical" id="driver-a408" style="left: 80%; top: 60%;">
+                        A408
+                    </div>
+                    
+                    <div class="driver-marker critical" id="driver-a410" style="left: 20%; top: 40%;">
+                        A410
+                    </div>
+                    
+                    <!-- Distance Labels -->
+                    <div class="distance-label" style="left: 60%; top: 40%;">0.3 mi</div>
+                    <div class="distance-label" style="left: 40%; top: 60%;">0.8 mi</div>
+                    
+                    <div class="driver-tooltip" id="tooltip"></div>
+                </div>
+                
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #007AFF;"></div>
+                        <span>You</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #34C759;"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #FF9500;"></div>
+                        <span>Overloaded</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #FF3B30;"></div>
+                        <span>Critical</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Message Board -->
+            <div class="section">
+                <div class="section-title">FLEET MESSAGES - LIVE</div>
+                <div class="message-board" id="message-board">
+                    <div class="message-item">
+                        <div class="message-avatar">A408</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <div class="message-sender">VAN A408</div>
+                                <div class="message-time">2 min ago</div>
+                            </div>
+                            <span class="message-type msg-rescue">RESCUE</span>
+                            <div class="message-text">Battery critical at 12%! Need help with 8 parcels. Location: 0.8 miles from you.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-avatar">OFF</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <div class="message-sender">MFM Office</div>
+                                <div class="message-time">5 min ago</div>
+                            </div>
+                            <span class="message-type msg-office">ANNOUNCEMENT</span>
+                            <div class="message-text">Badge scanning process changed - No scan required at RTS/Debrief. Photos still needed for returns.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-avatar">A401</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <div class="message-sender">VAN A401</div>
+                                <div class="message-time">8 min ago</div>
+                            </div>
+                            <span class="message-type msg-sweep">SWEEP</span>
+                            <div class="message-text">I can help A408! On my way now. ETA 3 minutes. Taking 8 parcels.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-avatar">YOU</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <div class="message-sender">VAN A393</div>
+                                <div class="message-time">12 min ago</div>
+                            </div>
+                            <span class="message-type msg-safety">SAFETY</span>
+                            <div class="message-text">Engine compliance verified. All systems good. Starting route now.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message-input-area">
+                    <input type="text" class="message-input" id="message-input" placeholder="Type message to fleet...">
+                    <button class="send-btn" onclick="sendCustomMessage()">Send</button>
+                </div>
+            </div>
+
+            <!-- Fleet Status -->
+            <div class="section">
+                <div class="section-title">FLEET STATUS</div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A393 (YOU)</div>
+                        <div class="battery-indicator">82% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-active">ACTIVE</span>
+                        <span>42/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A401</div>
+                        <div class="battery-indicator">94% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-available">AVAILABLE</span>
+                        <span>8/50 parcels</span>
+                    </div>
+                </div>
+                <div class="fleet-item">
+                    <div>
+                        <div class="van-id">VAN A408</div>
+                        <div class="battery-indicator">12% battery</div>
+                    </div>
+                    <div class="van-status">
+                        <span class="status-badge status-critical">CRITICAL</span>
+                        <span>35/50 parcels</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Status -->
+            <div class="section">
+                <div class="section-title">SAFETY STATUS</div>
+                <div class="safety-status">
+                    <div>
+                        <div class="safety-text" id="engine-status">Engine Status: OFF (Compliant)</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px;">Last Check: 2 min ago</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 24px; font-weight: 700; color: #34C759;">98/100</div>
+                        <div style="font-size: 12px; color: #666;">Safety Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCameraMode = '';
+        let messageId = 0;
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // Camera Functions
+        function openCamera(mode) {
+            currentCameraMode = mode;
+            const modal = document.getElementById('camera-modal');
+            const title = document.getElementById('camera-title');
+            
+            modal.classList.add('active');
+            
+            switch(mode) {
+                case 'vehicle':
+                    title.textContent = 'Vehicle Check - Tire Pressure';
+                    break;
+                case 'package':
+                    title.textContent = 'Package Scanning';
+                    break;
+                case 'fuel':
+                    title.textContent = 'Fuel Level Photo';
+                    break;
+                default:
+                    title.textContent = 'Camera';
+            }
+        }
+
+        function closeCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.classList.remove('active');
+            
+            // Reset scan frame color
+            const scanFrame = document.getElementById('scan-frame');
+            if (scanFrame) {
+                scanFrame.style.borderColor = '#34C759';
+            }
+            
+            // Return focus to dashboard
+            document.body.focus();
+        }
+
+        function capturePhoto() {
+            const scanFrame = document.getElementById('scan-frame');
+            if (scanFrame) {
+                scanFrame.style.borderColor = '#34C759';
+            }
+            
+            setTimeout(() => {
+                closeCamera();
+                
+                let message = '';
+                let messageType = '';
+                let messageCategory = 'safety';
+                
+                switch(currentCameraMode) {
+                    case 'vehicle':
+                        message = 'Vehicle check photo captured! Tire pressure verified and uploaded.';
+                        messageType = 'VEHICLE';
+                        messageCategory = 'safety';
+                        break;
+                    case 'package':
+                        message = 'Package scanned: 1Z987ABC654321 - Amazon Prime (2.3 lbs)';
+                        messageType = 'PACKAGE';
+                        messageCategory = 'chat';
+                        break;
+                    case 'fuel':
+                        message = 'Fuel level photo captured: 3/4 tank at 9:41 AM';
+                        messageType = 'FUEL';
+                        messageCategory = 'safety';
+                        break;
+                    default:
+                        message = 'Photo captured successfully!';
+                        messageType = 'PHOTO';
+                        messageCategory = 'chat';
+                }
+                
+                addMessage('YOU', messageType, messageCategory, message);
+                alert('Photo captured successfully!\n\n' + message);
+            }, 1000);
+        }
+
+        function switchCamera() {
+            alert('Camera switched between front/rear\n\nRear: Vehicle checks\nFront: Delivery proof');
+        }
+
+        // Message Board Functions
+        function addMessage(sender, type, category, text) {
+            const messageBoard = document.getElementById('message-board');
+            const messageItem = document.createElement('div');
+            messageItem.className = 'message-item';
+            
+            const avatar = sender.substring(0, 3).toUpperCase();
+            const time = 'Just now';
+            
+            messageItem.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <div class="message-sender">${sender}</div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                    <span class="message-type msg-${category}">${type.toUpperCase()}</span>
+                    <div class="message-text">${text}</div>
+                </div>
+            `;
+            
+            messageBoard.insertBefore(messageItem, messageBoard.firstChild);
+            
+            // Keep only last 10 messages
+            while (messageBoard.children.length > 10) {
+                messageBoard.removeChild(messageBoard.lastChild);
+            }
+        }
+
+        function sendMessage(type) {
+            let message = '';
+            let category = '';
+            
+            switch(type) {
+                case 'sweep':
+                    message = 'I\'m behind on deliveries and need help! 45 minutes late. Can anyone assist with 8 parcels? Location: 0.3 miles from A401.';
+                    category = 'sweep';
+                    addMessage('YOU', 'SWEEP REQUEST', 'sweep', message);
+                    
+                    setTimeout(() => {
+                        addMessage('A401', 'SWEEP RESPONSE', 'sweep', 'I can help! On my way now. ETA 3 minutes. Taking 8 parcels.');
+                    }, 2000);
+                    break;
+                    
+                case 'rescue':
+                    message = 'Battery critical at 15%! Need immediate help with 10 parcels. Can someone nearby assist?';
+                    category = 'rescue';
+                    addMessage('YOU', 'RESCUE NEEDED', 'rescue', message);
+                    
+                    setTimeout(() => {
+                        addMessage('A405', 'RESCUE RESPONSE', 'rescue', 'I\'m 0.5 miles away with 45% battery. Coming to help!');
+                    }, 1500);
+                    break;
+                    
+                case 'emergency':
+                    message = 'ENGINE OFF VIOLATION! Engine left running at stop. Need assistance immediately!';
+                    category = 'safety';
+                    addMessage('YOU', 'EMERGENCY', 'safety', message);
+                    
+                    setTimeout(() => {
+                        addMessage('OFF', 'SAFETY ALERT', 'office', 'Engine violation detected! Automatic safety protocols activated.');
+                    }, 1000);
+                    break;
+            }
+        }
+
+        // Make functions globally accessible
+        window.sendMessage = sendMessage;
+        window.addMessage = addMessage;
+        window.openCamera = openCamera;
+        window.closeCamera = closeCamera;
+        window.capturePhoto = capturePhoto;
+        window.switchCamera = switchCamera;
+        window.sendCustomMessage = sendCustomMessage;
+        window.updateMap = updateMap;
+
+        function sendCustomMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                addMessage('YOU', 'CHAT', 'chat', text);
+                input.value = '';
+                
+                // Simulate response
+                setTimeout(() => {
+                    const responses = [
+                        'Got it! Keep us updated.',
+                        'Roger that, good luck!',
+                        'Thanks for the update!',
+                        'Stay safe out there!'
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    const randomDriver = 'A40' + Math.floor(Math.random() * 9 + 1);
+                    addMessage(randomDriver, 'RESPONSE', 'chat', randomResponse);
+                }, 2000);
+            }
+        }
+
+        // Map Functions
+        function updateMap() {
+            const markers = document.querySelectorAll('.driver-marker:not(.you)');
+            markers.forEach(marker => {
+                const currentLeft = parseFloat(marker.style.left);
+                const currentTop = parseFloat(marker.style.top);
+                
+                const newLeft = Math.max(10, Math.min(90, currentLeft + (Math.random() - 0.5) * 10));
+                const newTop = Math.max(10, Math.min(90, currentTop + (Math.random() - 0.5) * 10));
+                
+                marker.style.left = newLeft + '%';
+                marker.style.top = newTop + '%';
+            });
+            
+            addMessage('YOU', 'MAP UPDATE', 'chat', 'Fleet map updated - Drivers positions refreshed');
+        }
+
+        function setupMapInteractions() {
+            const tooltip = document.getElementById('tooltip');
+            const markers = document.querySelectorAll('.driver-marker');
+            
+            markers.forEach(marker => {
+                marker.addEventListener('mouseenter', (e) => {
+                    const vanId = marker.textContent;
+                    let details = '';
+                    
+                    switch(vanId) {
+                        case 'YOU':
+                            details = 'VAN A393 (You)\nStatus: Active\nBattery: 82%\nParcels: 42/50';
+                            break;
+                        case 'A401':
+                            details = 'VAN A401\nStatus: Available\nBattery: 94%\nParcels: 8/50\nDistance: 0.3 mi';
+                            break;
+                        case 'A405':
+                            details = 'VAN A405\nStatus: Overloaded\nBattery: 45%\nParcels: 52/50\nDistance: 0.5 mi';
+                            break;
+                        case 'A408':
+                            details = 'VAN A408\nStatus: Critical\nBattery: 12%\nParcels: 35/50\nDistance: 0.8 mi';
+                            break;
+                        case 'A410':
+                            details = 'VAN A410\nStatus: Critical\nBattery: 23%\nParcels: 48/50\nDistance: 1.2 mi';
+                            break;
+                    }
+                    
+                    tooltip.textContent = details;
+                    tooltip.classList.add('show');
+                    
+                    const rect = marker.getBoundingClientRect();
+                    const mapRect = document.getElementById('fleet-map').getBoundingClientRect();
+                    tooltip.style.left = (rect.left - mapRect.left + rect.width/2) + 'px';
+                    tooltip.style.top = (rect.top - mapRect.top - 60) + 'px';
+                });
+                
+                marker.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('show');
+                });
+                
+                marker.addEventListener('click', () => {
+                    if (marker.textContent !== 'YOU') {
+                        const vanId = marker.textContent;
+                        alert(`VAN ${vanId} Details:\n\nClick to coordinate:\n- Send message\n- Request sweep\n- Offer help\n- Share location`);
+                    }
+                });
+            });
+        }
+
+        // Initialize
+        setupMapInteractions();
+        
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        updateTime();
+        
+        // Auto-update map every 10 seconds
+        setInterval(updateMap, 10000);
+        
+        // Add initial welcome message
+        setTimeout(() => {
+            addMessage('OFF', 'WELCOME', 'office', 'Welcome to Vantom OS! All systems online. Fleet coordination active.');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Camera Integration Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .phone-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: #0051D5;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.emergency {
+            background: #FF3B30;
+        }
+
+        .action-btn.emergency:hover {
+            background: #D70015;
+        }
+
+        .action-btn.rescue {
+            background: #FF9500;
+        }
+
+        .action-btn.rescue:hover {
+            background: #E68300;
+        }
+
+        .action-btn.camera {
+            background: #34C759;
+        }
+
+        .action-btn.camera:hover {
+            background: #28CD41;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        /* Camera Modal Styles */
+        .camera-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+        }
+
+        .camera-modal.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .camera-header {
+            background: #000;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .camera-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .camera-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .camera-view {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333),
+                        linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-frame {
+            width: 200px;
+            height: 200px;
+            border: 3px solid #34C759;
+            border-radius: 12px;
+            position: relative;
+            animation: scan-pulse 2s infinite;
+        }
+
+        @keyframes scan-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: #34C759;
+            top: 0;
+            animation: scan-move 2s linear infinite;
+        }
+
+        @keyframes scan-move {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .camera-controls {
+            background: #000;
+            padding: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .camera-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .camera-btn.capture {
+            width: 60px;
+            height: 60px;
+            background: white;
+            color: black;
+        }
+
+        .camera-btn.capture:hover {
+            background: #f0f0f0;
+        }
+
+        /* Vehicle Check Styles */
+        .vehicle-check-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .vehicle-check-item:last-child {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        .check-icon.pending {
+            background: #F2F2F7;
+            color: #8E8E93;
+        }
+
+        .check-icon.completed {
+            background: #34C759;
+            color: white;
+        }
+
+        .check-icon.in-progress {
+            background: #FF9500;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .check-details {
+            flex: 1;
+        }
+
+        .check-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .check-description {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .check-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #F2F2F7;
+            color: #8E8E93;
+        }
+
+        .status-completed {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-in-progress {
+            background: #FF9500;
+            color: white;
+        }
+
+        /* Package Scan Styles */
+        .package-scan-result {
+            background: #F0F9FF;
+            border: 2px solid #007AFF;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .package-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .package-label {
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .package-value {
+            color: #333;
+        }
+
+        .scan-success {
+            background: #D4EDDA;
+            border-color: #34C759;
+            color: #155724;
+        }
+
+        .demo-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+
+        .demo-btn-small {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .photo-thumbnail {
+            aspect-ratio: 1;
+            background: #F2F2F7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .photo-thumbnail:hover {
+            transform: scale(1.05);
+            background: #E5E5EA;
+        }
+
+        .photo-thumbnail.taken {
+            background: #34C759;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .phone-container {
+                margin: 10px;
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>CAMERA DEMO</div>
+        <button class="demo-btn-small" onclick="openVehicleCheck()">Vehicle Check</button>
+        <button class="demo-btn-small" onclick="openPackageScan()">Package Scan</button>
+        <button class="demo-btn-small" onclick="openFuelPhoto()">Fuel Photo</button>
+        <button class="demo-btn-small" onclick="simulateScan()">Simulate Scan</button>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="camera-modal" id="camera-modal">
+        <div class="camera-header">
+            <div class="camera-title" id="camera-title">Camera</div>
+            <button class="camera-close" onclick="closeCamera()">×</button>
+        </div>
+        <div class="camera-view">
+            <div class="camera-preview">
+                <div class="scan-frame" id="scan-frame">
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+        </div>
+        <div class="camera-controls">
+            <button class="camera-btn" onclick="closeCamera()">Cancel</button>
+            <button class="camera-btn capture" onclick="capturePhoto()">Capture</button>
+            <button class="camera-btn" onclick="switchCamera()">Switch</button>
+        </div>
+    </div>
+
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">9:41 AM</span>
+                <div>
+                    <span class="battery" id="battery">82%</span>
+                    <span> | </span>
+                    <span>5G</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>VANTOM OS</h1>
+                <div class="driver-info">
+                    DRIVER: John Smith | VAN: A393 | SHIFT: Active
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn camera" onclick="openVehicleCheck()">
+                    <span>Vehicle Check</span>
+                </button>
+                <button class="action-btn camera" onclick="openPackageScan()">
+                    <span>Scan Package</span>
+                </button>
+                <button class="action-btn camera" onclick="openFuelPhoto()">
+                    <span>Fuel Photo</span>
+                </button>
+                <button class="action-btn" onclick="showMessages()">
+                    <span>Messages</span>
+                </button>
+            </div>
+
+            <!-- Vehicle Check Section -->
+            <div class="section">
+                <div class="section-title">VEHICLE CHECK (3/5 Complete)</div>
+                
+                <div class="vehicle-check-item">
+                    <div class="check-icon completed">T</div>
+                    <div class="check-details">
+                        <div class="check-title">Tire Pressure</div>
+                        <div class="check-description">All tires checked and inflated</div>
+                    </div>
+                    <div class="check-status status-completed">DONE</div>
+                </div>
+
+                <div class="vehicle-check-item">
+                    <div class="check-icon completed">L</div>
+                    <div class="check-details">
+                        <div class="check-title">Lights Test</div>
+                        <div class="check-description">Headlights, brake lights, signals working</div>
+                    </div>
+                    <div class="check-status status-completed">DONE</div>
+                </div>
+
+                <div class="vehicle-check-item">
+                    <div class="check-icon in-progress">F</div>
+                    <div class="check-details">
+                        <div class="check-title">Fuel Level Photo</div>
+                        <div class="check-description">Take photo of fuel gauge</div>
+                    </div>
+                    <div class="check-status status-in-progress">CAMERA</div>
+                </div>
+
+                <div class="vehicle-check-item">
+                    <div class="check-icon pending">B</div>
+                    <div class="check-details">
+                        <div class="check-title">Brake Check</div>
+                        <div class="check-description">Test brake functionality</div>
+                    </div>
+                    <div class="check-status status-pending">PENDING</div>
+                </div>
+
+                <div class="vehicle-check-item">
+                    <div class="check-icon pending">E</div>
+                    <div class="check-details">
+                        <div class="check-title">Engine Oil</div>
+                        <div class="check-description">Check oil level and condition</div>
+                    </div>
+                    <div class="check-status status-pending">PENDING</div>
+                </div>
+
+                <div class="photo-gallery">
+                    <div class="photo-thumbnail taken">Tire Photo</div>
+                    <div class="photo-thumbnail taken">Lights Photo</div>
+                    <div class="photo-thumbnail">Fuel Photo</div>
+                    <div class="photo-thumbnail">Brake Photo</div>
+                    <div class="photo-thumbnail">Oil Photo</div>
+                    <div class="photo-thumbnail">Engine Photo</div>
+                </div>
+            </div>
+
+            <!-- Package Scanning Section -->
+            <div class="section">
+                <div class="section-title">PACKAGE SCANNING</div>
+                
+                <div class="package-scan-result" id="package-result">
+                    <div class="package-info">
+                        <span class="package-label">Tracking ID:</span>
+                        <span class="package-value" id="tracking-id">Scan package to view</span>
+                    </div>
+                    <div class="package-info">
+                        <span class="package-label">Customer:</span>
+                        <span class="package-value" id="customer-name">-</span>
+                    </div>
+                    <div class="package-info">
+                        <span class="package-label">Address:</span>
+                        <span class="package-value" id="address">-</span>
+                    </div>
+                    <div class="package-info">
+                        <span class="package-label">Weight:</span>
+                        <span class="package-value" id="weight">-</span>
+                    </div>
+                    <div class="package-info">
+                        <span class="package-label">Status:</span>
+                        <span class="package-value" id="scan-status">Ready to scan</span>
+                    </div>
+                </div>
+
+                <button class="action-btn camera" style="width: 100%; margin-top: 10px;" onclick="openPackageScan()">
+                    <span>Scan Next Package</span>
+                </button>
+            </div>
+
+            <!-- Recent Photos -->
+            <div class="section">
+                <div class="section-title">RECENT PHOTOS</div>
+                <div class="photo-gallery">
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('tire')">Tire Check</div>
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('lights')">Lights Test</div>
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('fuel')">Fuel Level</div>
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('package1')">Package 1</div>
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('package2')">Package 2</div>
+                    <div class="photo-thumbnail taken" onclick="viewPhoto('delivery')">Delivery Proof</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCameraMode = '';
+        let photoCount = 0;
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function openCamera(mode) {
+            currentCameraMode = mode;
+            const modal = document.getElementById('camera-modal');
+            const title = document.getElementById('camera-title');
+            
+            modal.classList.add('active');
+            
+            switch(mode) {
+                case 'vehicle':
+                    title.textContent = 'Vehicle Check - Tire Pressure';
+                    break;
+                case 'fuel':
+                    title.textContent = 'Fuel Level Photo';
+                    break;
+                case 'package':
+                    title.textContent = 'Package Scanning';
+                    break;
+                case 'delivery':
+                    title.textContent = 'Delivery Proof Photo';
+                    break;
+                default:
+                    title.textContent = 'Camera';
+            }
+        }
+
+        function closeCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.classList.remove('active');
+        }
+
+        function capturePhoto() {
+            photoCount++;
+            
+            // Simulate photo capture
+            const scanFrame = document.getElementById('scan-frame');
+            scanFrame.style.borderColor = '#34C759';
+            
+            setTimeout(() => {
+                closeCamera();
+                
+                // Update UI based on mode
+                switch(currentCameraMode) {
+                    case 'vehicle':
+                        updateVehicleCheck();
+                        break;
+                    case 'fuel':
+                        updateFuelPhoto();
+                        break;
+                    case 'package':
+                        updatePackageScan();
+                        break;
+                    case 'delivery':
+                        updateDeliveryProof();
+                        break;
+                }
+                
+                alert(`Photo captured successfully! (#${photoCount})\n\n${getPhotoDescription(currentCameraMode)}`);
+            }, 1000);
+        }
+
+        function getPhotoDescription(mode) {
+            switch(mode) {
+                case 'vehicle':
+                    return 'Tire pressure photo saved with timestamp and GPS location';
+                case 'fuel':
+                    return 'Fuel level photo saved: 3/4 tank, 7:45 AM';
+                case 'package':
+                    return 'Package scanned: 1Z987ABC654321 - Amazon Prime';
+                case 'delivery':
+                    return 'Delivery proof photo saved: Customer doorstep';
+                default:
+                    return 'Photo saved to Vantom OS cloud storage';
+            }
+        }
+
+        function updateVehicleCheck() {
+            // Find the in-progress item and mark as completed
+            const items = document.querySelectorAll('.vehicle-check-item');
+            items.forEach(item => {
+                const icon = item.querySelector('.check-icon.in-progress');
+                if (icon) {
+                    icon.className = 'check-icon completed';
+                    icon.textContent = 'F';
+                    const status = item.querySelector('.check-status');
+                    status.className = 'check-status status-completed';
+                    status.textContent = 'DONE';
+                }
+            });
+            
+            // Update photo gallery
+            const thumbnails = document.querySelectorAll('.photo-thumbnail');
+            thumbnails.forEach(thumb => {
+                if (thumb.textContent === 'Fuel Photo') {
+                    thumb.className = 'photo-thumbnail taken';
+                }
+            });
+        }
+
+        function updateFuelPhoto() {
+            // Update photo gallery
+            const thumbnails = document.querySelectorAll('.photo-thumbnail');
+            thumbnails.forEach(thumb => {
+                if (thumb.textContent === 'Fuel Photo') {
+                    thumb.className = 'photo-thumbnail taken';
+                }
+            });
+        }
+
+        function updatePackageScan() {
+            const result = document.getElementById('package-result');
+            result.className = 'package-scan-result scan-success';
+            
+            document.getElementById('tracking-id').textContent = '1Z987ABC654321';
+            document.getElementById('customer-name').textContent = 'Sarah Johnson';
+            document.getElementById('address').textContent = '123 Main St, Apt 4B';
+            document.getElementById('weight').textContent = '2.3 lbs';
+            document.getElementById('scan-status').textContent = 'Scanned Successfully';
+        }
+
+        function updateDeliveryProof() {
+            alert('Delivery proof photo captured!\n\nCustomer: Sarah Johnson\nAddress: 123 Main St\nTime: 9:41 AM\nGPS: 40.7128°N, 74.0060°W\n\nProof uploaded to Amazon system');
+        }
+
+        function switchCamera() {
+            alert('Camera switched between front/rear\n\nRear camera for vehicle checks\nFront camera for delivery proof');
+        }
+
+        function openVehicleCheck() {
+            openCamera('vehicle');
+        }
+
+        function openPackageScan() {
+            openCamera('package');
+        }
+
+        function openFuelPhoto() {
+            openCamera('fuel');
+        }
+
+        function showMessages() {
+            alert('Messages Center:\n\nVEHICLE: Tire pressure check completed\nFUEL: Fuel level photo captured\nPACKAGE: 3 packages scanned today\nSAFETY: Engine compliance verified\n\nAll photos automatically timestamped and GPS tagged!');
+        }
+
+        function viewPhoto(type) {
+            alert(`Photo Viewer:\n\n${type.toUpperCase()} PHOTO\n\nDate: April 22, 2026\nTime: 9:41 AM\nGPS: 40.7128°N, 74.0060°W\nSize: 2.3 MB\nResolution: 4032x3024\n\nPhoto uploaded to Vantom OS cloud`);
+        }
+
+        function simulateScan() {
+            openPackageScan();
+            setTimeout(() => {
+                capturePhoto();
+            }, 2000);
+        }
+
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        updateTime();
+    </script>
+</body>
+</html>

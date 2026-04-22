@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Driver Sweep Coordination Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F2F2F7;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        .demo-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .driver-panel {
+            flex: 1;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #fff;
+            border-radius: 30px;
+            overflow: hidden;
+            min-height: 667px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .battery {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header.driver-a {
+            background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
+        }
+
+        .header.driver-b {
+            background: linear-gradient(135deg, #34C759 0%, #28CD41 100%);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .driver-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            background: #fff;
+        }
+
+        .action-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .action-btn.sweep {
+            background: #FF9500;
+        }
+
+        .action-btn.sweep:hover {
+            background: #E68300;
+        }
+
+        .action-btn.help {
+            background: #34C759;
+        }
+
+        .action-btn.help:hover {
+            background: #28CD41;
+        }
+
+        .action-btn:disabled {
+            background: #8E8E93;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .section {
+            background: #fff;
+            margin: 12px 20px;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .route-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .stop-number {
+            font-weight: 700;
+            color: #007AFF;
+        }
+
+        .stop-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #34C759;
+            color: white;
+        }
+
+        .status-progress {
+            background: #FF9500;
+            color: white;
+        }
+
+        .status-next {
+            background: #007AFF;
+            color: white;
+        }
+
+        .status-behind {
+            background: #FF3B30;
+            color: white;
+        }
+
+        .message-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .message-item:last-child {
+            border-bottom: none;
+        }
+
+        .message-type {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .msg-sweep {
+            background: #FF9500;
+            color: white;
+        }
+
+        .msg-office {
+            background: #007AFF;
+            color: white;
+        }
+
+        .msg-help {
+            background: #34C759;
+            color: white;
+        }
+
+        .bag-transfer {
+            background: #F0F9FF;
+            border: 2px dashed #007AFF;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .bag-transfer.active {
+            background: #D4EDDA;
+            border-color: #34C759;
+        }
+
+        .scan-animation {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #007AFF;
+            color: white;
+            border-radius: 8px;
+            margin: 10px;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .office-panel {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .office-header {
+            background: linear-gradient(135deg, #5856D6 0%, #AF52DE 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .coordination-log {
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .log-sweep {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .log-response {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .log-transfer {
+            background: #CCE5FF;
+            color: #004085;
+        }
+
+        .demo-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .demo-btn-small {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        @media (max-width: 1200px) {
+            .demo-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>SWEEP DEMO</div>
+        <button class="demo-btn-small" onclick="startSweep()">Start Sweep</button>
+        <button class="demo-btn-small" onclick="respondToSweep()">Respond</button>
+        <button class="demo-btn-small" onclick="transferBag()">Transfer Bag</button>
+        <button class="demo-btn-small" onclick="resetDemo()">Reset</button>
+    </div>
+
+    <div class="demo-container">
+        <!-- Driver A (Behind on Deliveries) -->
+        <div class="driver-panel">
+            <div class="phone-screen">
+                <div class="status-bar">
+                    <span id="time-a">9:41 AM</span>
+                    <div>
+                        <span class="battery" id="battery-a">82%</span>
+                        <span> | </span>
+                        <span>5G</span>
+                    </div>
+                </div>
+
+                <div class="header driver-a">
+                    <h1>DRIVER A</h1>
+                    <div class="driver-info">
+                        DRIVER: Mike Chen | VAN: A393 | STATUS: BEHIND
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="action-btn sweep" onclick="requestSweep()" id="sweep-btn">Request Sweep</button>
+                    <button class="action-btn" onclick="showMessages()">Messages</button>
+                    <button class="action-btn" onclick="scanBag()" id="scan-btn-a">Scan Bag</button>
+                    <button class="action-btn" onclick="callOffice()">Call Office</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">DELIVERY STATUS (BEHIND)</div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">Stop 8/28</span>
+                            <span style="margin-left: 8px;">123 Main St</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-completed">COMPLETED</span>
+                        </div>
+                    </div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">Stop 9/28</span>
+                            <span style="margin-left: 8px;">456 Oak Ave</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-behind">45 MIN LATE</span>
+                        </div>
+                    </div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">Stop 10/28</span>
+                            <span style="margin-left: 8px;">789 Pine Rd</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-behind">60 MIN LATE</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 8px; background: #FFF3CD; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 12px; color: #856404;">ESTIMATED COMPLETION</div>
+                        <div style="font-weight: 600; color: #856404;">6:45 PM (2 hours late)</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">MESSAGES</div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-sweep">SWEEP</span>
+                            <span style="margin-left: 8px;">HELP NEEDED: Behind 45 minutes</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">Just now</span>
+                    </div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-office">OFFICE</span>
+                            <span style="margin-left: 8px;">Sweep initiated - Driver B responding</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">2 min ago</span>
+                    </div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-help">HELP</span>
+                            <span style="margin-left: 8px;">Driver B en route to your location</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">3 min ago</span>
+                    </div>
+                </div>
+
+                <div class="bag-transfer" id="transfer-a">
+                    <h3>BAG TRANSFER READY</h3>
+                    <p>Driver B will scan your bag to help with deliveries</p>
+                    <div class="scan-animation" id="scan-animation-a" style="display: none;">SCANNING...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Driver B (Helper) -->
+        <div class="driver-panel">
+            <div class="phone-screen">
+                <div class="status-bar">
+                    <span id="time-b">9:41 AM</span>
+                    <div>
+                        <span class="battery" id="battery-b">94%</span>
+                        <span> | </span>
+                        <span>5G</span>
+                    </div>
+                </div>
+
+                <div class="header driver-b">
+                    <h1>DRIVER B</h1>
+                    <div class="driver-info">
+                        DRIVER: Sarah Johnson | VAN: A401 | STATUS: HELPING
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="action-btn help" onclick="respondToSweep()" id="respond-btn">Accept Sweep</button>
+                    <button class="action-btn" onclick="showMessages()">Messages</button>
+                    <button class="action-btn" onclick="scanBag()" id="scan-btn-b">Scan Bag</button>
+                    <button class="action-btn" onclick="navigateToDriver()">Navigate to A</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">DELIVERY STATUS</div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">Stop 15/28</span>
+                            <span style="margin-left: 8px;">321 Elm St</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-completed">COMPLETED</span>
+                        </div>
+                    </div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">Stop 16/28</span>
+                            <span style="margin-left: 8px;">654 Maple Dr</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-next">NEXT</span>
+                        </div>
+                    </div>
+                    <div class="route-item">
+                        <div>
+                            <span class="stop-number">SWEEP</span>
+                            <span style="margin-left: 8px;">Help Driver A (3 stops)</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="stop-status status-progress">IN PROGRESS</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding: 8px; background: #D4EDDA; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 12px; color: #155724;">SWEEP LOCATION</div>
+                        <div style="font-weight: 600; color: #155724;">Driver A: 0.8 miles away</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">MESSAGES</div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-sweep">SWEEP</span>
+                            <span style="margin-left: 8px;">Driver A needs help - Behind 45 minutes</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">5 min ago</span>
+                    </div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-office">OFFICE</span>
+                            <span style="margin-left: 8px;">Please assist Driver A - Sweep approved</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">4 min ago</span>
+                    </div>
+                    <div class="message-item">
+                        <div>
+                            <span class="message-type msg-help">HELP</span>
+                            <span style="margin-left: 8px;">On my way to Driver A location</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666;">Just now</span>
+                    </div>
+                </div>
+
+                <div class="bag-transfer" id="transfer-b">
+                    <h3>READY TO SCAN BAG</h3>
+                    <p>Scan Driver A's bag to help with deliveries</p>
+                    <div class="scan-animation" id="scan-animation-b" style="display: none;">SCANNING...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Office Monitoring Panel -->
+    <div class="office-panel">
+        <div class="office-header">
+            <h2>MFM LOGISTICS OFFICE</h2>
+            <p>Fleet Monitoring & Sweep Coordination</p>
+        </div>
+        
+        <div class="section-title">COORDINATION LOG</div>
+        <div class="coordination-log" id="coordination-log">
+            <div class="log-entry log-sweep">09:35: Driver A reports 45 minutes behind schedule</div>
+            <div class="log-entry log-sweep">09:36: Office initiates sweep protocol</div>
+            <div class="log-entry log-response">09:37: Driver B accepts sweep request</div>
+            <div class="log-entry log-response">09:38: Driver B en route to Driver A location</div>
+        </div>
+    </div>
+
+    <script>
+        let sweepActive = false;
+        let transferComplete = false;
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            document.getElementById('time-a').textContent = timeString;
+            document.getElementById('time-b').textContent = timeString;
+        }
+
+        function requestSweep() {
+            if (sweepActive) return;
+            
+            sweepActive = true;
+            const sweepBtn = document.getElementById('sweep-btn');
+            sweepBtn.disabled = true;
+            sweepBtn.textContent = 'Sweep Requested';
+            
+            addLogEntry('09:35: Driver A reports 45 minutes behind schedule', 'sweep');
+            addLogEntry('09:36: Office initiates sweep protocol', 'sweep');
+            
+            setTimeout(() => {
+                addLogEntry('09:37: Driver B accepts sweep request', 'response');
+                document.getElementById('respond-btn').disabled = false;
+                document.getElementById('respond-btn').textContent = 'Accept Sweep';
+            }, 2000);
+        }
+
+        function respondToSweep() {
+            const respondBtn = document.getElementById('respond-btn');
+            respondBtn.disabled = true;
+            respondBtn.textContent = 'En Route to Driver A';
+            
+            addLogEntry('09:38: Driver B en route to Driver A location', 'response');
+            
+            setTimeout(() => {
+                document.getElementById('scan-btn-a').disabled = false;
+                document.getElementById('scan-btn-b').disabled = false;
+                document.getElementById('transfer-a').classList.add('active');
+                document.getElementById('transfer-b').classList.add('active');
+            }, 3000);
+        }
+
+        function scanBag() {
+            const scanAnimationA = document.getElementById('scan-animation-a');
+            const scanAnimationB = document.getElementById('scan-animation-b');
+            
+            scanAnimationA.style.display = 'inline-block';
+            scanAnimationB.style.display = 'inline-block';
+            
+            addLogEntry('09:41: Bag scanning initiated', 'transfer');
+            
+            setTimeout(() => {
+                scanAnimationA.textContent = 'BAG SCANNED!';
+                scanAnimationB.textContent = 'BAG SCANNED!';
+                scanAnimationA.style.background = '#34C759';
+                scanAnimationB.style.background = '#34C759';
+                
+                addLogEntry('09:42: Bag transfer complete - 8 parcels transferred', 'transfer');
+                transferComplete = true;
+                
+                // Update route status
+                setTimeout(() => {
+                    alert('SWEEP COMPLETE!\n\nDriver B took 8 parcels from Driver A\nDriver A back on schedule\nDriver B continues with extra deliveries\n\nTotal coordination time: 7 minutes');
+                }, 2000);
+            }, 3000);
+        }
+
+        function transferBag() {
+            scanBag();
+        }
+
+        function callOffice() {
+            alert('Calling MFM Logistics Office...\n\n"Driver A here, I\'m running 45 minutes behind. Can you send a sweep?"\n\nOffice: "Sweep initiated. Driver B is responding."');
+        }
+
+        function navigateToDriver() {
+            alert('GPS Navigation Started\n\nDestination: Driver A (VAN A393)\nDistance: 0.8 miles\nETA: 3 minutes\n\nDriver A location shared automatically');
+        }
+
+        function showMessages() {
+            alert('Messages Center:\n\nSWEEP: Help needed - Behind 45 minutes\nOFFICE: Sweep initiated - Driver B responding\nHELP: Driver B en route to your location\n\nNo WhatsApp needed - All coordination in Vantom OS!');
+        }
+
+        function addLogEntry(message, type) {
+            const log = document.getElementById('coordination-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function startSweep() {
+            requestSweep();
+        }
+
+        function resetDemo() {
+            sweepActive = false;
+            transferComplete = false;
+            
+            document.getElementById('sweep-btn').disabled = false;
+            document.getElementById('sweep-btn').textContent = 'Request Sweep';
+            document.getElementById('respond-btn').disabled = true;
+            document.getElementById('respond-btn').textContent = 'Accept Sweep';
+            document.getElementById('scan-btn-a').disabled = true;
+            document.getElementById('scan-btn-b').disabled = true;
+            
+            document.getElementById('transfer-a').classList.remove('active');
+            document.getElementById('transfer-b').classList.remove('active');
+            
+            document.getElementById('scan-animation-a').style.display = 'none';
+            document.getElementById('scan-animation-b').style.display = 'none';
+            document.getElementById('scan-animation-a').textContent = 'SCANNING...';
+            document.getElementById('scan-animation-b').textContent = 'SCANNING...';
+            document.getElementById('scan-animation-a').style.background = '#007AFF';
+            document.getElementById('scan-animation-b').style.background = '#007AFF';
+            
+            document.getElementById('coordination-log').innerHTML = `
+                <div class="log-entry log-sweep">09:35: Driver A reports 45 minutes behind schedule</div>
+                <div class="log-entry log-sweep">09:36: Office initiates sweep protocol</div>
+                <div class="log-entry log-response">09:37: Driver B accepts sweep request</div>
+                <div class="log-entry log-response">09:38: Driver B en route to Driver A location</div>
+            `;
+        }
+
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        updateTime();
+    </script>
+</body>
+</html>
