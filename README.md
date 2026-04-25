@@ -30,6 +30,15 @@ npm install --legacy-peer-deps
 # 2. Run the Winning Simulation (Verification of all 3 Tracks)
 npm run demo
 
+# 3. Verify FoxMQ + Tashi Vertex Integration
+node scripts/test_foxmq_vertex.cjs
+
+# 4. Launch Visual Dashboard
+open demo/vertex_dashboard.html
+
+# 5. Run Interactive Demo
+node scripts/hackathon_demo.js
+
 ```
 
 * * * * *
@@ -50,6 +59,18 @@ npm run demo
 🛡️ **CORE ARCHITECTURE**
 -------------------------
 
+### **FoxMQ Message-Passing Layer**
+
+-   **Byzantine MQTT**: Fault-tolerant message queue with QoS levels (0,1,2)
+-   **Cluster Management**: Automatic failover and cryptographic message signing
+-   **Implementation**: `src/foxmq/FoxMQClient.ts`
+
+### **Tashi Vertex BFT Coordination Layer**
+
+-   **DAG-based Consensus**: Gossip-about-gossip with virtual voting (26-103ms)
+-   **Byzantine Tolerance**: Handles up to 1/3 malicious nodes
+-   **Implementation**: `src/tashi/VertexConsensus.ts`
+
 ### **Track 1: Stateful Handshake (Vertex 2.0)**
 
 -   **Leaderless Discovery**: Nodes establish mesh presence without a central server.
@@ -60,7 +81,7 @@ npm run demo
 
 -   **LocalOptimizer**: Real-time threat analysis of incoming logistics data.
 
--   **Privacy-First**: AI inference happens locally on the edge, bypassing the need for cloud surveillance.
+-   **Privacy-First**: AI inference happens locally on the edge, bypassing need for cloud surveillance.
 
 ### **Track 3: Agent Economy**
 
@@ -107,12 +128,22 @@ npx expo start --web --clear
 Vantom_OS/
 |-- scripts/               # 🏁 Winning Demo Logic
 |   |-- final_submission_demo.ts
+|   |-- test_foxmq_vertex.cjs
+|   |-- hackathon_demo.js
+|   |-- complete_demo.js
+|   |-- performance_benchmark.ts
 |-- src/                   # 🧠 Core Engine
+|   |-- foxmq/             # FoxMQ Message-Passing Layer
+|   |   |-- FoxMQClient.ts
+|   |-- tashi/             # Tashi Vertex BFT Coordination
+|   |   |-- VertexConsensus.ts
 |   |-- pulse/             # Rescue protocol & P2P Economy
 |   |-- inference/         # FlagOS Local AI
 |   |-- swarm/             # Vertex Mesh Coordination
-|-- app/                    # 📱 Mobile Dashboard (Expo)
+|-- demo/                  # 🎛️ Visual Dashboard
+|   |-- vertex_dashboard.html
 |-- docs/                  # 📄 Verification Logs
+|   |-- VERTEX_INTEGRATION.md
 
 ```
 

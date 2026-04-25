@@ -1,5 +1,9 @@
 // Vertex 2.0 - P2P Coordination Fabric for Vantom OS Swarm
 // The TCP/IP for Delivery Driver Swarms - Eliminate the Middleman
+// Enhanced with FoxMQ message-passing and Tashi Vertex BFT coordination
+
+import { FoxMQClient } from '../foxmq/FoxMQClient.js';
+import { VertexConsensus } from '../tashi/VertexConsensus.js';
 
 export interface SwarmAgent {
   id: string;
@@ -64,9 +68,16 @@ export class VertexSwarmCoordinator {
   private isInitialized = false;
   private nodeId: string;
   private discoveryInterval: NodeJS.Timeout | null = null;
+  
+  // FoxMQ and Tashi Vertex integration
+  private foxmqClient: FoxMQClient;
+  private vertexConsensus: VertexConsensus;
+  private byzantineLatency: number = 0;
 
   constructor(nodeId: string) {
     this.nodeId = nodeId;
+    this.foxmqClient = new FoxMQClient(nodeId);
+    this.vertexConsensus = new VertexConsensus(nodeId);
   }
 
   /**
@@ -74,9 +85,15 @@ export class VertexSwarmCoordinator {
    * Low Barrier: Get resilient mesh running in under an hour
    */
   async initializeSwarm(): Promise<void> {
-    console.log('Initializing Vertex 2.0 P2P swarm coordination...');
+    console.log('Initializing Vertex 2.0 P2P swarm coordination with FoxMQ + Tashi Vertex BFT...');
     
-    // Register this node
+    // Initialize Tashi Vertex consensus engine first
+    await this.vertexConsensus.initialize();
+    
+    // Initialize FoxMQ message-passing layer
+    await this.foxmqClient.initializeCluster();
+    
+    // Register this node with Byzantine consensus
     await this.registerLocalAgent();
     
     // Start agent discovery
@@ -88,8 +105,89 @@ export class VertexSwarmCoordinator {
     // Start safety signal monitoring
     this.startSafetySignalPropagation();
     
+    // Setup FoxMQ subscriptions for swarm communication
+    await this.setupFoxMQSubscriptions();
+    
     this.isInitialized = true;
-    console.log(`Vertex swarm initialized - Node ${this.nodeId} ready for P2P coordination`);
+    console.log(`Vertex swarm initialized - Node ${this.nodeId} ready with FoxMQ + Tashi Vertex BFT coordination`);
+  }
+
+  /**
+   * Setup FoxMQ subscriptions for swarm communication
+   */
+  private async setupFoxMQSubscriptions(): Promise<void> {
+    console.log(`Vertex Swarm ${this.nodeId}: Setting up FoxMQ subscriptions...`);
+    
+    // Subscribe to swarm discovery messages
+    await this.foxmqClient.subscribe('swarm/discovery', 1, (message) => {
+      this.handleFoxMQDiscovery(message);
+    });
+    
+    // Subscribe to safety signals
+    await this.foxmqClient.subscribe('swarm/safety', 2, (message) => {
+      this.handleFoxMQSafetySignal(message);
+    });
+    
+    // Subscribe to task negotiations
+    await this.foxmqClient.subscribe('swarm/tasks', 1, (message) => {
+      this.handleFoxMQTaskNegotiation(message);
+    });
+    
+    // Subscribe to rescue coordination
+    await this.foxmqClient.subscribe('swarm/rescue', 2, (message) => {
+      this.handleFoxMQRescue(message);
+    });
+    
+    console.log(`Vertex Swarm ${this.nodeId}: FoxMQ subscriptions configured`);
+  }
+
+  /**
+   * Handle FoxMQ discovery messages
+   */
+  private handleFoxMQDiscovery(message: any): void {
+    const agentInfo = message.payload.agentInfo;
+    if (agentInfo && !this.agents.has(agentInfo.id)) {
+      this.agents.set(agentInfo.id, agentInfo);
+      this.establishPeerConnection(agentInfo.id);
+      console.log(`FoxMQ Discovery: New agent ${agentInfo.id} (${agentInfo.type})`);
+    }
+  }
+
+  /**
+   * Handle FoxMQ safety signals
+   */
+  private async handleFoxMQSafetySignal(message: any): Promise<void> {
+    const safetySignal = message.payload;
+    await this.handleSafetySignal(safetySignal);
+    console.log(`FoxMQ Safety: Received signal from ${safetySignal.agentId}`);
+  }
+
+  /**
+   * Handle FoxMQ task negotiations
+   */
+  private handleFoxMQTaskNegotiation(message: any): void {
+    const taskData = message.payload;
+    if (taskData.taskId && taskData.bid) {
+      // Handle incoming bid
+      const task = this.activeTasks.get(taskData.taskId);
+      if (task) {
+        task.bids.push(taskData.bid);
+        console.log(`FoxMQ Task: Bid received for task ${taskData.taskId}`);
+      }
+    } else if (taskData.taskId && !taskData.bid) {
+      // Handle new task
+      this.activeTasks.set(taskData.taskId, taskData);
+      console.log(`FoxMQ Task: New task ${taskData.taskId}`);
+    }
+  }
+
+  /**
+   * Handle FoxMQ rescue messages
+   */
+  private handleFoxMQRescue(message: any): void {
+    const rescueData = message.payload;
+    console.log(`FoxMQ Rescue: Rescue coordination message received`);
+    // Process rescue coordination through existing RescueProtocol
   }
 
   private async registerLocalAgent(): Promise<void> {
@@ -250,7 +348,22 @@ export class VertexSwarmCoordinator {
 
     this.activeTasks.set(taskId, negotiation);
 
-    // Broadcast task to all capable agents
+    // Submit to Tashi Vertex consensus for Byzantine agreement on task creation
+    const consensusResult = await this.vertexConsensus.submitTransaction({
+      type: 'task_creation',
+      task: negotiation,
+      nodeId: this.nodeId
+    });
+
+    // Broadcast task via FoxMQ for fault-tolerant message passing
+    await this.foxmqClient.publish('swarm/tasks', {
+      type: 'task_negotiation',
+      task: negotiation,
+      consensusId: consensusResult,
+      nodeId: this.nodeId
+    }, task.urgency > 7 ? 2 : 1); // Higher QoS for urgent tasks
+
+    // Also use traditional broadcast for redundancy
     const taskMessage: SwarmMessage = {
       messageId: `task_${taskId}`,
       senderId: this.nodeId,
@@ -262,7 +375,7 @@ export class VertexSwarmCoordinator {
     };
 
     this.broadcastMessage(taskMessage);
-    console.log(`Task negotiation initiated: ${taskId}`);
+    console.log(`Task negotiation initiated via FoxMQ + Tashi Vertex: ${taskId}`);
 
     return taskId;
   }
@@ -278,7 +391,24 @@ export class VertexSwarmCoordinator {
 
     task.bids.push(fullBid);
 
-    // Broadcast bid to all agents
+    // Submit bid to Tashi Vertex consensus for Byzantine agreement
+    const consensusResult = await this.vertexConsensus.submitTransaction({
+      type: 'task_bid',
+      taskId,
+      bid: fullBid,
+      nodeId: this.nodeId
+    });
+
+    // Broadcast bid via FoxMQ for fault-tolerant message passing
+    await this.foxmqClient.publish('swarm/tasks', {
+      type: 'task_bid',
+      taskId,
+      bid: fullBid,
+      consensusId: consensusResult,
+      nodeId: this.nodeId
+    }, 1); // QoS 1 for bid messages
+
+    // Also use traditional broadcast for redundancy
     const bidMessage: SwarmMessage = {
       messageId: `bid_${taskId}_${this.nodeId}`,
       senderId: this.nodeId,
@@ -290,6 +420,7 @@ export class VertexSwarmCoordinator {
     };
 
     this.broadcastMessage(bidMessage);
+    console.log(`Task bid submitted via FoxMQ + Tashi Vertex: ${taskId}`);
   }
 
   /**
@@ -310,6 +441,22 @@ export class VertexSwarmCoordinator {
 
     this.safetySignals.push(fullSignal);
 
+    // Submit to Tashi Vertex consensus for Byzantine agreement
+    const consensusResult = await this.vertexConsensus.submitTransaction({
+      type: 'safety_signal',
+      signal: fullSignal,
+      nodeId: this.nodeId
+    });
+
+    // Broadcast via FoxMQ for fault-tolerant message passing
+    await this.foxmqClient.publish('swarm/safety', {
+      type: 'safety_broadcast',
+      signal: fullSignal,
+      consensusId: consensusResult,
+      nodeId: this.nodeId
+    }, 2); // QoS 2 for critical safety signals
+
+    // Also use traditional broadcast for redundancy
     const safetyMessage: SwarmMessage = {
       messageId: `safety_${Date.now()}`,
       senderId: this.nodeId,
@@ -324,6 +471,8 @@ export class VertexSwarmCoordinator {
     
     // Immediate local response
     await this.handleSafetySignal(fullSignal);
+    
+    console.log(`Safety signal broadcasted via FoxMQ + Tashi Vertex with BFT consensus`);
   }
 
   private async handleSafetySignal(signal: SafetySignal): Promise<void> {
@@ -467,12 +616,21 @@ export class VertexSwarmCoordinator {
     activeTasks: number;
     meshConnections: number;
     safetySignals: number;
+    foxmqStats: any;
+    vertexStats: any;
+    byzantineLatency: number;
   } {
+    const foxmqStats = this.foxmqClient.getStatistics();
+    const vertexStats = this.vertexConsensus.getStatistics();
+    
     return {
       totalAgents: this.agents.size,
       activeTasks: this.activeTasks.size,
       meshConnections: this.meshConnections.get(this.nodeId)?.length || 0,
-      safetySignals: this.safetySignals.length
+      safetySignals: this.safetySignals.length,
+      foxmqStats,
+      vertexStats,
+      byzantineLatency: this.byzantineLatency
     };
   }
 
@@ -492,6 +650,12 @@ export class VertexSwarmCoordinator {
       clearInterval(this.discoveryInterval);
     }
     
+    // Shutdown FoxMQ client
+    await this.foxmqClient.disconnect();
+    
+    // Shutdown Tashi Vertex consensus
+    await this.vertexConsensus.shutdown();
+    
     this.agents.clear();
     this.messageQueue = [];
     this.activeTasks.clear();
@@ -499,7 +663,7 @@ export class VertexSwarmCoordinator {
     this.meshConnections.clear();
     this.isInitialized = false;
     
-    console.log('Vertex swarm coordinator shutdown complete');
+    console.log('Vertex swarm coordinator with FoxMQ + Tashi Vertex shutdown complete');
   }
 }
 

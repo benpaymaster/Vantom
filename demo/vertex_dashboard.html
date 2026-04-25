@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantom OS - Vertex BFT Consensus Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
+        }
+        .consensus-node {
+            animation: pulse-glow 2s infinite;
+        }
+        .byzantine-node {
+            animation: pulse-glow 1s infinite;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+        .message-flow {
+            animation: flow 2s linear infinite;
+        }
+        @keyframes flow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                Vantom OS - Vertex BFT Consensus Dashboard
+            </h1>
+            <p class="text-gray-400">FoxMQ Message-Passing + Tashi Vertex BFT Coordination</p>
+            <div class="mt-4 flex justify-center gap-4">
+                <span class="px-3 py-1 bg-green-600 rounded-full text-sm">18ms Target Latency</span>
+                <span class="px-3 py-1 bg-blue-600 rounded-full text-sm">Byzantine Fault Tolerant</span>
+                <span class="px-3 py-1 bg-purple-600 rounded-full text-sm">P2P Mesh Network</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Latency Chart -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-blue-400">Consensus Latency</h3>
+                <canvas id="latencyChart" width="400" height="200"></canvas>
+                <div class="mt-4 text-sm">
+                    <div class="flex justify-between">
+                        <span>Current:</span>
+                        <span id="currentLatency" class="font-mono text-green-400">--ms</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Average:</span>
+                        <span id="avgLatency" class="font-mono text-blue-400">--ms</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Target:</span>
+                        <span class="font-mono text-yellow-400">18ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Status -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-purple-400">Network Status</h3>
+                <canvas id="networkChart" width="400" height="200"></canvas>
+                <div class="mt-4 text-sm">
+                    <div class="flex justify-between">
+                        <span>Active Nodes:</span>
+                        <span id="activeNodes" class="font-mono text-green-400">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Byzantine Nodes:</span>
+                        <span id="byzantineNodes" class="font-mono text-red-400">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Messages/sec:</span>
+                        <span id="msgPerSec" class="font-mono text-blue-400">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FoxMQ Status -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-green-400">FoxMQ Message Queue</h3>
+                <canvas id="foxmqChart" width="400" height="200"></canvas>
+                <div class="mt-4 text-sm">
+                    <div class="flex justify-between">
+                        <span>Queue Size:</span>
+                        <span id="queueSize" class="font-mono text-yellow-400">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Subscriptions:</span>
+                        <span id="subscriptions" class="font-mono text-green-400">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Cluster Nodes:</span>
+                        <span id="clusterNodes" class="font-mono text-blue-400">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consensus Visualization -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-yellow-400">Byzantine Consensus Visualization</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- DAG Visualization -->
+                <div>
+                    <h4 class="text-lg font-medium mb-3 text-gray-300">Event DAG Structure</h4>
+                    <div class="bg-gray-900 rounded p-4 h-64 relative overflow-hidden">
+                        <canvas id="dagCanvas" width="400" height="240"></canvas>
+                    </div>
+                </div>
+                <!-- Node Status -->
+                <div>
+                    <h4 class="text-lg font-medium mb-3 text-gray-300">Swarm Node Status</h4>
+                    <div class="bg-gray-900 rounded p-4 h-64 overflow-y-auto" id="nodeStatus">
+                        <!-- Nodes will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Events -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-red-400">Real-time Consensus Events</h3>
+            <div class="bg-gray-900 rounded p-4 h-48 overflow-y-auto font-mono text-sm" id="eventLog">
+                <div class="text-gray-500">Waiting for consensus events...</div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-4 text-indigo-400">Simulation Controls</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="startSimulation()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition">
+                    Start Simulation
+                </button>
+                <button onclick="stopSimulation()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition">
+                    Stop Simulation
+                </button>
+                <button onclick="injectByzantineNode()" class="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded transition">
+                    Inject Byzantine Node
+                </button>
+                <button onclick="broadcastSafetySignal()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition">
+                    Broadcast Safety Signal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let simulationRunning = false;
+        let simulationInterval;
+        let latencyData = [];
+        let networkData = [];
+        let foxmqData = [];
+        let eventCounter = 0;
+        let nodes = [];
+        let byzantineCount = 0;
+
+        // Initialize charts
+        const latencyChart = new Chart(document.getElementById('latencyChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Consensus Latency (ms)',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 150 }
+                }
+            }
+        });
+
+        const networkChart = new Chart(document.getElementById('networkChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Honest Nodes', 'Byzantine Nodes'],
+                datasets: [{
+                    data: [10, 0],
+                    backgroundColor: ['rgb(34, 197, 94)', 'rgb(239, 68, 68)']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const foxmqChart = new Chart(document.getElementById('foxmqChart'), {
+            type: 'bar',
+            data: {
+                labels: ['QoS 0', 'QoS 1', 'QoS 2'],
+                datasets: [{
+                    label: 'Messages',
+                    data: [0, 0, 0],
+                    backgroundColor: ['rgba(156, 163, 175, 0.5)', 'rgba(59, 130, 246, 0.5)', 'rgba(34, 197, 94, 0.5)']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Initialize nodes
+        function initializeNodes() {
+            nodes = [];
+            for (let i = 1; i <= 10; i++) {
+                nodes.push({
+                    id: `VAN_${String(i).padStart(2, '0')}`,
+                    status: 'active',
+                    battery: Math.floor(Math.random() * 40) + 60,
+                    parcels: Math.floor(Math.random() * 30) + 10,
+                    isByzantine: false,
+                    lastSeen: Date.now()
+                });
+            }
+            updateNodeStatus();
+        }
+
+        // Update node status display
+        function updateNodeStatus() {
+            const nodeStatusDiv = document.getElementById('nodeStatus');
+            nodeStatusDiv.innerHTML = nodes.map(node => `
+                <div class="mb-2 p-2 rounded ${node.isByzantine ? 'bg-red-900' : 'bg-gray-800'}">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium ${node.isByzantine ? 'text-red-400' : 'text-green-400'}">
+                            ${node.id} ${node.isByzantine ? '(Byzantine)' : ''}
+                        </span>
+                        <span class="text-xs text-gray-400">
+                            Battery: ${node.battery}% | Parcels: ${node.parcels}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Simulation functions
+        function startSimulation() {
+            if (simulationRunning) return;
+            simulationRunning = true;
+            
+            logEvent('🚀 Simulation started - FoxMQ + Tashi Vertex BFT active');
+            
+            simulationInterval = setInterval(() => {
+                updateMetrics();
+                simulateConsensus();
+                simulateFoxMQMessages();
+                updateNetworkStats();
+            }, 1000);
+        }
+
+        function stopSimulation() {
+            simulationRunning = false;
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+            }
+            logEvent('⏸️ Simulation stopped');
+        }
+
+        function injectByzantineNode() {
+            const honestNodes = nodes.filter(n => !n.isByzantine);
+            if (honestNodes.length > 0) {
+                const targetNode = honestNodes[Math.floor(Math.random() * honestNodes.length)];
+                targetNode.isByzantine = true;
+                byzantineCount++;
+                updateNodeStatus();
+                updateNetworkStats();
+                logEvent(`⚠️ Byzantine node injected: ${targetNode.id}`);
+            }
+        }
+
+        function broadcastSafetySignal() {
+            const latency = Math.random() * 30 + 20; // 20-50ms
+            updateLatencyChart(latency);
+            logEvent(`🚨 Safety signal broadcast - Consensus: ${latency.toFixed(2)}ms`);
+        }
+
+        function updateMetrics() {
+            // Update latency
+            const latency = Math.random() * 77 + 26; // 26-103ms Tashi Vertex range
+            updateLatencyChart(latency);
+            
+            // Update network stats
+            document.getElementById('activeNodes').textContent = nodes.length;
+            document.getElementById('byzantineNodes').textContent = byzantineCount;
+            document.getElementById('msgPerSec').textContent = Math.floor(Math.random() * 100 + 50);
+        }
+
+        function updateLatencyChart(latency) {
+            const now = new Date().toLocaleTimeString();
+            latencyChart.data.labels.push(now);
+            latencyChart.data.datasets[0].data.push(latency);
+            
+            if (latencyChart.data.labels.length > 20) {
+                latencyChart.data.labels.shift();
+                latencyChart.data.datasets[0].data.shift();
+            }
+            
+            latencyChart.update();
+            
+            document.getElementById('currentLatency').textContent = `${latency.toFixed(2)}ms`;
+            
+            const avgLatency = latencyChart.data.datasets[0].data.reduce((a, b) => a + b, 0) / latencyChart.data.datasets[0].data.length;
+            document.getElementById('avgLatency').textContent = `${avgLatency.toFixed(2)}ms`;
+        }
+
+        function simulateConsensus() {
+            eventCounter++;
+            if (eventCounter % 5 === 0) {
+                logEvent(`🔄 Consensus round ${Math.floor(eventCounter / 5)} completed`);
+                drawDAG();
+            }
+        }
+
+        function simulateFoxMQMessages() {
+            const qos0 = Math.floor(Math.random() * 10);
+            const qos1 = Math.floor(Math.random() * 20) + 10;
+            const qos2 = Math.floor(Math.random() * 5) + 2;
+            
+            foxmqChart.data.datasets[0].data = [qos0, qos1, qos2];
+            foxmqChart.update();
+            
+            document.getElementById('queueSize').textContent = qos0 + qos1 + qos2;
+            document.getElementById('subscriptions').textContent = '4';
+            document.getElementById('clusterNodes').textContent = '3';
+        }
+
+        function updateNetworkStats() {
+            const honestNodes = nodes.filter(n => !n.isByzantine).length;
+            networkChart.data.datasets[0].data = [honestNodes, byzantineCount];
+            networkChart.update();
+        }
+
+        function drawDAG() {
+            const canvas = document.getElementById('dagCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw simple DAG visualization
+            ctx.strokeStyle = '#4B5563';
+            ctx.fillStyle = '#60A5FA';
+            
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const x = 50 + j * 120;
+                    const y = 30 + i * 40;
+                    
+                    // Draw node
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Draw connections
+                    if (i > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x - 40, y - 40);
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + 40, y - 40);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function logEvent(message) {
+            const eventLog = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'text-green-400';
+            eventDiv.textContent = `[${timestamp}] ${message}`;
+            
+            eventLog.appendChild(eventDiv);
+            eventLog.scrollTop = eventLog.scrollHeight;
+            
+            // Keep only last 50 events
+            while (eventLog.children.length > 50) {
+                eventLog.removeChild(eventLog.firstChild);
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initializeNodes();
+            drawDAG();
+            logEvent('🔧 Vantom OS Vertex Dashboard initialized');
+            logEvent('📡 FoxMQ message-passing layer ready');
+            logEvent('🔀 Tashi Vertex BFT consensus engine ready');
+            logEvent('🎯 18ms latency target configured');
+        };
+    </script>
+</body>
+</html>
