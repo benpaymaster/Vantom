@@ -263,7 +263,7 @@ export class FoxMQClient {
    */
   private verifyMessage(message: FoxMQMessage, publicKey: string): boolean {
     // Simulate signature verification
-    return message.signature && message.senderId;
+    return !!(message.signature && message.senderId);
   }
 
   /**
